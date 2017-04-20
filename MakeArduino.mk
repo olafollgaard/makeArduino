@@ -1,7 +1,8 @@
 #----------------------
 # Makefile for Arduino
 #----------------------
-# This makefile is made to be included from a simple Makefile with a simple sketch configuration.
+# This makefile is made to be included from a simple Makefile with a simple sketch configuration,
+# which only needs to define MCU and SKETCH_NAME.
 #
 # The configuration consists of the following variables:
 #
@@ -13,7 +14,9 @@
 # CORE_C_FILES : List of core .c files to compile
 # CORE_CPP_FILES : List of core .cpp files to compile
 #
-# Only SKETCH_NAME and MCU is required, the rest have defaults as defined below.
+# PORT : Port for the uploader
+# BOARD_TYPE : Board type for uploader
+# BAUD_RATE : Comm speed for uploader
 #
 PORT ?= /dev/ttyACM0
 BOARD_TYPE ?= arduino
@@ -38,7 +41,7 @@ ARDUINO_CORE ?= /home/$(USER)/arduino-1.8.1/hardware/arduino/avr/cores/arduino
 INCLUDE ?= -I. -I$(ARDUINO_CORE)
 CORE_C_FILES ?= WInterrupts wiring_analog wiring wiring_digital wiring_pulse wiring_shift
 CORE_CPP_FILES ?= abi CDC HardwareSerial HardwareSerial0 HardwareSerial1 HardwareSerial2 HardwareSerial3 \
-		IPAddress main new PluggableUSB Print Stream Tone USBCore WMath WString
+	IPAddress main new PluggableUSB Print Stream Tone USBCore WMath WString
 
 else
 $(error !!!!! This makefile does not support the selected MCU - $(MCU))
@@ -79,54 +82,54 @@ all: clean compile upload
 build: clean compile
 
 clean:
-		$(info #### Cleanup)
-		rm -rf "$(tmp_dir)"
+	$(info #### Cleanup)
+	rm -rf "$(tmp_dir)"
 
 compile: $(tmp_dir) $(sketch_hex)
-		$(info #### Compile complete)
+	$(info #### Compile complete)
 
 reset:
-		$(info #### Reset)
-		stty --file $(PORT) hupcl
-		sleep 0.1
-		stty --file $(PORT) -hupcl
+	$(info #### Reset)
+	stty --file $(PORT) hupcl
+	sleep 0.1
+	stty --file $(PORT) -hupcl
 
 upload:
-		$(info #### Upload to $(MCU))
-		$(AVRDUDE) -q -V -p $(MCU) -C $(AVRDUDE_CONF) -c $(BOARD_TYPE) -b $(BAUD_RATE) -P $(PORT) \
-			   -U flash:w:$(sketch_hex):i
-		$(info #### Upload complete)
+	$(info #### Upload to $(MCU))
+	$(AVRDUDE) -q -V -p $(MCU) -C $(AVRDUDE_CONF) -c $(BOARD_TYPE) -b $(BAUD_RATE) -P $(PORT) \
+	   -U flash:w:$(sketch_hex):i
+	$(info #### Upload complete)
 
 $(tmp_dir):
-		mkdir $@
+	mkdir $@
 
 # Convert elf to hex
 $(sketch_hex): $(sketch_elf)
-		$(info #### Convert to $@)
-		$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
+	$(info #### Convert to $@)
+	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Compile to elf
 $(sketch_elf): $(sketch_o) $(core_o)
-		$(info #### Link to $@)
-		$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o $@ $^
+	$(info #### Link to $@)
+	$(CC) -mmcu=$(MCU) -lm -Wl,--gc-sections -Os -o $@ $^
 
 # Generate sketch .cpp from .ino
 $(sketch_cpp): $(SKETCH_NAME)
-		$(info #### Generate $@)
-		@echo '#include "WProgram.h"' > $@
-		@cat $< >> $@
+	$(info #### Generate $@)
+	@echo '#include "WProgram.h"' > $@
+	@cat $< >> $@
 
 # Compile sketch .cpp file
 $(tmp_dir)/%.o:: $(tmp_dir)/%.cpp
-		$(info #### Compile $<)
-		$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+	$(info #### Compile $<)
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 # Compile core .c files
 $(tmp_dir)/%.o:: $(ARDUINO_CORE)/%.c
-		$(info #### Compile $<)
-		$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	$(info #### Compile $<)
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 # Compile core .cpp files
 $(tmp_dir)/%.o:: $(ARDUINO_CORE)/%.cpp
-		$(info #### Compile $<)
-		$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
+	$(info #### Compile $<)
+	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
