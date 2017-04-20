@@ -65,27 +65,27 @@ AVRDUDE_CONF = /etc/avrdude.conf
 #-----------------------------
 # Core and intermediate files
 
-tmp_dir = /tmp/make_arduino
-sketch_cpp = $(tmp_dir)/$(SKETCH_NAME).cpp
-sketch_elf = $(tmp_dir)/$(SKETCH_NAME).elf
-sketch_hex = $(tmp_dir)/$(SKETCH_NAME).hex
-sketch_o = $(tmp_dir)/$(SKETCH_NAME).o
-core_o = $(CORE_C_FILES:%=$(tmp_dir)/%.o) $(CORE_CPP_FILES:%=$(tmp_dir)/%.o)
+out_dir = .makeArduino
+sketch_cpp = $(out_dir)/$(SKETCH_NAME).cpp
+sketch_elf = $(out_dir)/$(SKETCH_NAME).elf
+sketch_hex = $(out_dir)/$(SKETCH_NAME).hex
+sketch_o = $(out_dir)/$(SKETCH_NAME).o
+core_o = $(CORE_C_FILES:%=$(out_dir)/%.o) $(CORE_CPP_FILES:%=$(out_dir)/%.o)
 
 #-------------------
 # Targets and rules
 
 .PHONY: all build clean compile reset upload
 
-all: clean compile upload
+all: compile upload
 
 build: clean compile
 
 clean:
 	$(info #### Cleanup)
-	rm -rf "$(tmp_dir)"
+	rm -rf "$(out_dir)"
 
-compile: $(tmp_dir) $(sketch_hex)
+compile: $(out_dir) $(sketch_hex)
 	$(info #### Compile complete)
 
 reset:
@@ -100,7 +100,7 @@ upload:
 	   -U flash:w:$(sketch_hex):i
 	$(info #### Upload complete)
 
-$(tmp_dir):
+$(out_dir):
 	mkdir $@
 
 # Convert elf to hex
@@ -120,16 +120,16 @@ $(sketch_cpp): $(SKETCH_NAME)
 	@cat $< >> $@
 
 # Compile sketch .cpp file
-$(tmp_dir)/%.o:: $(tmp_dir)/%.cpp
+$(out_dir)/%.o:: $(out_dir)/%.cpp
 	$(info #### Compile $<)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
 
 # Compile core .c files
-$(tmp_dir)/%.o:: $(ARDUINO_CORE)/%.c
+$(out_dir)/%.o:: $(ARDUINO_CORE)/%.c
 	$(info #### Compile $<)
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
 # Compile core .cpp files
-$(tmp_dir)/%.o:: $(ARDUINO_CORE)/%.cpp
+$(out_dir)/%.o:: $(ARDUINO_CORE)/%.cpp
 	$(info #### Compile $<)
 	$(CXX) -c $(CXXFLAGS) $(CPPFLAGS) $< -o $@
