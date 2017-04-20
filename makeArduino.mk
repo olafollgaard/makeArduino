@@ -75,7 +75,7 @@ core_o = $(CORE_C_FILES:%=$(out_dir)/%.o) $(CORE_CPP_FILES:%=$(out_dir)/%.o)
 #-------------------
 # Targets and rules
 
-.PHONY: all build clean compile reset upload
+.PHONY: all build clean compile upload
 
 all: compile upload
 
@@ -88,13 +88,7 @@ clean:
 compile: $(out_dir) $(sketch_hex)
 	$(info #### Compile complete)
 
-reset:
-	$(info #### Reset)
-	stty --file $(PORT) hupcl
-	sleep 0.1
-	stty --file $(PORT) -hupcl
-
-upload:
+upload: compile
 	$(info #### Upload to $(MCU))
 	$(AVRDUDE) -q -V -p $(MCU) -C $(AVRDUDE_CONF) -c $(BOARD_TYPE) -b $(BAUD_RATE) -P $(PORT) \
 	   -U flash:w:$(sketch_hex):i
