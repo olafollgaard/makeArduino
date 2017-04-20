@@ -22,16 +22,9 @@ BAUD_RATE ?= 115200
 ifndef SKETCH_NAME
 $(error !!!!! SKETCH_NAME must be defined)
 endif
-ifeq ($(MCU),attiny84)
 
-F_CPU ?= 8000000
-ARDUINO_CORE ?= /home/$(USER)/Arduino/tiny/avr/cores/tiny
-INCLUDE ?= -I. -I$(ARDUINO_CORE)
-CORE_C_FILES ?= pins_arduino WInterrupts wiring_analog wiring wiring_digital wiring_pulse wiring_shift
-CORE_CPP_FILES ?= HardwareSerial main Print Tone WMath WString
-
-else ifeq ($(MCU),attiny85)
-
+ifneq (,$(findstring $(MCU),attiny84 attiny85))
+# Defaults for attiny84 and attiny85
 F_CPU ?= 8000000
 ARDUINO_CORE ?= /home/$(USER)/Arduino/tiny/avr/cores/tiny
 INCLUDE ?= -I. -I$(ARDUINO_CORE)
@@ -39,7 +32,7 @@ CORE_C_FILES ?= pins_arduino WInterrupts wiring_analog wiring wiring_digital wir
 CORE_CPP_FILES ?= HardwareSerial main Print Tone WMath WString
 
 else ifeq ($(MCU),atmega328p)
-
+# Defaults for atmega328p
 F_CPU ?= 16000000
 ARDUINO_CORE ?= /home/$(USER)/arduino-1.8.1/hardware/arduino/avr/cores/arduino
 INCLUDE ?= -I. -I$(ARDUINO_CORE)
@@ -48,7 +41,7 @@ CORE_CPP_FILES ?= abi CDC HardwareSerial HardwareSerial0 HardwareSerial1 Hardwar
 		IPAddress main new PluggableUSB Print Stream Tone USBCore WMath WString
 
 else
-$(error !!!!! Unrecognized MCU $(MCU))
+$(error !!!!! This makefile does not support the selected MCU - $(MCU))
 endif
 
 #---------------------------------
