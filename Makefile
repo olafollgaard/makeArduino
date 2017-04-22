@@ -1,5 +1,5 @@
 #---------------------------------------------------------------
-# Sketch filename (should be in the same directory of Makefile)
+# Sketch filename (should be in the same directory as Makefile)
 SKETCH_NAME = Test.ino
 # Target MCU
 MCU = atmega328p
