@@ -29,7 +29,7 @@ endif
 ifneq (,$(findstring $(MCU),attiny84 attiny85))
 # Defaults for attiny84 and attiny85
 F_CPU ?= 8000000
-ARDUINO_CORE ?= /home/$(USER)/Arduino/tiny/avr/cores/tiny
+ARDUINO_CORE ?= /home/$(USER)/Arduino/libraries/tiny/avr/cores/tiny
 INCLUDE ?= -I. -I$(ARDUINO_CORE)
 CORE_C_FILES ?= pins_arduino WInterrupts wiring_analog wiring wiring_digital wiring_pulse wiring_shift
 CORE_CPP_FILES ?= HardwareSerial main Print Tone WMath WString
