@@ -9,7 +9,8 @@
 # |TARGET_SYSTEM = uno
 # |include makeArduino.mk
 # +------------------------
-# All local .cpp files are compiled as well as the sketch file
+# All local .cpp files are compiled as well as the sketch file and
+# the libraries specified in ARDUINO_LIBS and USER_LIBS 
 #
 # Make targets: all build clean compile upload
 #
@@ -33,6 +34,21 @@ else ifeq (,$(findstring $(TARGET_SYSTEM),uno pro_trinket_5v tiny_84 tiny_85))
 $(error !!!!! Unrecognized TARGET_SYSTEM $(TARGET_SYSTEM))
 endif
 
+# ARDUINO_PATH : Path to arduino folder
+ARDUINO_PATH ?= /home/$(USER)/arduino-1.8.1
+
+# ARDUINO_LIB_PATH : Path to arduino libraries folder
+ARDUINO_LIB_PATH ?= $(ARDUINO_PATH)/libraries
+
+# ARDUINO_LIBS : Arduino libraries to include
+ARDUINO_LIBS ?=
+
+# USER_LIB_PATH : Path to user libraries folder
+USER_LIB_PATH ?= /home/$(USER)/Arduino/libraries
+
+# USER_LIBS : User libraries to include
+USER_LIBS ?=
+
 # F_CPU : Target frequency in Hz, e.g. 8000000 or 16000000
 ifneq (,$(findstring $(TARGET_SYSTEM),uno pro_trinket_5v))
 F_CPU ?= 16000000
@@ -41,7 +57,7 @@ F_CPU ?= 8000000
 endif
 
 # ARDUINO_AVR : Path to "hardware/arduino/avr" folder
-ARDUINO_AVR ?= /home/$(USER)/arduino-1.8.1/hardware/arduino/avr
+ARDUINO_AVR ?= $(ARDUINO_PATH)/hardware/arduino/avr
 
 # UPLOAD_PROGRAMMER : Programmer type for uploader
 # UPLOAD_PORT_CONFIG : Port configuration for the uploader
@@ -74,15 +90,12 @@ else ifeq ($(TARGET_SYSTEM),tiny_85)
 mcu = attiny85
 endif
 
-# Arduino core files
+# Arduino core path
 ifneq (,$(findstring $(TARGET_SYSTEM),tiny_84 tiny_85))
 arduino_core = /home/$(USER)/Arduino/tiny/avr/cores/tiny
 else
 arduino_core = $(ARDUINO_AVR)/cores/arduino
 endif
-core_c_files ?= $(wildcard $(arduino_core)/*.c)
-core_cpp_files ?= $(wildcard $(arduino_core)/*.cpp)
-core_asm_files ?= $(wildcard $(arduino_core)/*.S)
 
 # Defines
 defines = -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR
@@ -92,13 +105,44 @@ else ifeq ($(TARGET_SYSTEM),uno)
 defines += -DARDUINO_AVR_UNO
 endif
 
-# Includes
-include_flags = -I. -I$(arduino_core)
+# Intermediate files
+out_path = .makeArduino
+sketch_cpp = $(out_path)/$(SKETCH_NAME).cpp
+sketch_elf = $(out_path)/$(SKETCH_NAME).elf
+sketch_hex = $(out_path)/$(SKETCH_NAME).hex
+sketch_o = $(out_path)/$(SKETCH_NAME).cpp.o
+local_o = $(addprefix $(out_path)/,$(addsuffix .o,$(notdir $(wildcard *.cpp))))
+
+# Core and libraries
+include_flags = -I.
 ifeq ($(TARGET_SYSTEM),uno)
 include_flags += -I$(ARDUINO_AVR)/variants/standard
 else ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 include_flags += -I$(ARDUINO_AVR)/variants/eightanaloginputs
 endif
+
+define library_template =
+include_flags += -I$(2)
+lib_out_paths += $$(out_path)/$(1)
+libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,$$(notdir $$(wildcard $(2)/*.c))))
+libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,$$(notdir $$(wildcard $(2)/*.cpp))))
+libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,$$(notdir $$(wildcard $(2)/*.S))))
+$$(out_path)/$(1):
+	mkdir $$@
+$$(out_path)/$(1)/%.c.o:: $(2)/%.c
+	$$(info #### Compile $$<)
+	$$(CC) -c $$(CFLAGS) $$< -o $$@
+$$(out_path)/$(1)/%.cpp.o:: $(2)/%.cpp
+	$$(info #### Compile $$<)
+	$$(CXX) -c $$(CXXFLAGS) $$< -o $$@
+$$(out_path)/$(1)/%.S.o:: $(2)/%.S
+	$$(info #### Compile $$<)
+	$$(CC) -c $$(SFLAGS) $$(CFLAGS) $$< -o $$@
+endef
+
+$(eval $(call library_template,core,$(arduino_core)))
+$(foreach lib,$(ARDUINO_LIBS),$(eval $(call library_template,$(lib),$(ARDUINO_LIB_PATH)/$(lib)/src)))
+$(foreach lib,$(USER_LIBS),$(eval $(call library_template,$(lib),$(USER_LIB_PATH)/$(lib))))
 
 # Flags
 c_common_flags = -g -Os -w -Wall $(defines) $(include_flags) \
@@ -114,21 +158,6 @@ CXXFLAGS += -std=gnu++11
 endif
 avrdude_conf = /etc/avrdude.conf
 
-#-----------------------------
-# Core and intermediate files
-
-out_dir = .makeArduino
-sketch_cpp = $(out_dir)/$(SKETCH_NAME).cpp
-sketch_elf = $(out_dir)/$(SKETCH_NAME).elf
-sketch_hex = $(out_dir)/$(SKETCH_NAME).hex
-sketch_o = $(out_dir)/$(SKETCH_NAME).cpp.o
-local_o = $(addprefix $(out_dir)/,$(addsuffix .o,$(notdir $(wildcard *.cpp))))
-core_o = $(addprefix $(out_dir)/core/,$(addsuffix .o,\
-	$(notdir $(core_c_files)) \
-	$(notdir $(core_cpp_files)) \
-	$(notdir $(core_asm_files)) \
-	))
-
 #-------------------
 # Targets and rules
 
@@ -140,9 +169,9 @@ build: clean compile
 
 clean:
 	$(info #### Cleanup)
-	rm -rfd "$(out_dir)"
+	rm -rfd "$(out_path)"
 
-compile: $(out_dir) $(sketch_hex)
+compile: $(out_path) $(lib_out_paths) $(sketch_hex)
 	$(info #### Compile complete)
 
 upload: compile
@@ -151,9 +180,8 @@ upload: compile
 	   -U flash:w:$(sketch_hex):i
 	$(info #### Upload complete)
 
-$(out_dir):
+$(out_path):
 	mkdir $@
-	mkdir $@/core
 
 # Convert elf to hex
 $(sketch_hex): $(sketch_elf)
@@ -161,7 +189,7 @@ $(sketch_hex): $(sketch_elf)
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Link to elf
-$(sketch_elf): $(sketch_o) $(local_o) $(core_o)
+$(sketch_elf): $(sketch_o) $(local_o) $(libs_o)
 	$(info #### Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $^
 
@@ -176,26 +204,11 @@ endif
 	@cat $< >> $@
 
 # Compile sketch .cpp file
-$(out_dir)/%.cpp.o:: $(out_dir)/%.cpp
+$(out_path)/%.cpp.o:: $(out_path)/%.cpp
 	$(info #### Compile $<)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 # Compile local .cpp files
-$(out_dir)/%.cpp.o:: %.cpp
+$(out_path)/%.cpp.o:: %.cpp
 	$(info #### Compile $<)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
-
-# Compile core .c files
-$(out_dir)/core/%.c.o:: $(arduino_core)/%.c
-	$(info #### Compile $<)
-	$(CC) -c $(CFLAGS) $< -o $@
-
-# Compile core .cpp files
-$(out_dir)/core/%.cpp.o:: $(arduino_core)/%.cpp
-	$(info #### Compile $<)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
-
-# Compile core .S files
-$(out_dir)/core/%.S.o:: $(arduino_core)/%.S
-	$(info #### Compile $<)
-	$(CC) -c $(SFLAGS) $(CFLAGS) $< -o $@
