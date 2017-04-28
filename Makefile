@@ -1,7 +1,7 @@
 #---------------------------------------------------------------
 # Sketch filename (should be in the same directory as Makefile)
 SKETCH_NAME = Test.ino
-# Target MCU
-MCU = atmega328p
+# Target system
+TARGET_SYSTEM = uno
 
-include makeArduino.mk
+include ../makeArduino/makeArduino.mk
