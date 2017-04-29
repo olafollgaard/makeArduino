@@ -1,7 +1,9 @@
 #---------------------------------------------------------------
-# Sketch filename (should be in the same directory as Makefile)
+# Arduino Makefile (should be in the same directory as sketch)
+
 SKETCH_NAME = Test.ino
-# Target system
 TARGET_SYSTEM = uno
+ARDUINO_LIBS =
+USER_LIBS =
 
 include ../makeArduino/makeArduino.mk

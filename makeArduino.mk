@@ -7,6 +7,8 @@
 # +------------------------
 # |SKETCH_NAME = Blink.ino
 # |TARGET_SYSTEM = uno
+# |ARDUINO_LIBS =
+# |USER_LIBS =
 # |include makeArduino.mk
 # +------------------------
 # All local .cpp files are compiled as well as the sketch file and
