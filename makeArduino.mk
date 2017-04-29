@@ -75,6 +75,15 @@ endif
 # End of configuration section
 #==============================================================================
 
+.PHONY: all build clean
+
+all: compile upload
+
+build: clean compile
+
+clean:
+	rm -rfd $(out_path)
+
 #---------------------
 # Compilers and tools
 
@@ -165,23 +174,14 @@ avrdude_conf = /etc/avrdude.conf
 #-------------------
 # Targets and rules
 
-.PHONY: all build clean compile upload
-
-all: compile upload
-
-build: clean compile
-
-clean:
-	rm -rfd "$(out_path)"
+.PHONY: compile upload
 
 compile: $(out_path) $(lib_out_paths) $(sketch_hex)
-	$(info #### Compile complete)
 
 upload: compile
 	$(info #### Upload to $(TARGET_SYSTEM))
 	$(AVRDUDE) -p $(mcu) -C $(avrdude_conf) -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG) \
 		-U flash:w:$(sketch_hex):i
-	$(info #### Upload complete)
 
 $(out_path):
 	mkdir $@
