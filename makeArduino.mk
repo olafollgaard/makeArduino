@@ -37,6 +37,9 @@ endif
 # ARDUINO_PATH : Path to arduino folder
 ARDUINO_PATH ?= /home/$(USER)/arduino-1.8.1
 
+# SKETCHBOOK_PATH : Path to the user sketchbook
+SKETCHBOOK_PATH ?= /home/$(USER)/Arduino
+
 # ARDUINO_LIB_PATH : Path to arduino libraries folder
 ARDUINO_LIB_PATH ?= $(ARDUINO_PATH)/libraries
 
@@ -44,12 +47,12 @@ ARDUINO_LIB_PATH ?= $(ARDUINO_PATH)/libraries
 ARDUINO_LIBS ?=
 
 # USER_LIB_PATH : Path to user libraries folder
-USER_LIB_PATH ?= /home/$(USER)/Arduino/libraries
+USER_LIB_PATH ?= $(SKETCHBOOK_PATH)/libraries
 
 # USER_LIBS : User libraries to include
 USER_LIBS ?=
 
-# F_CPU : Target frequency in Hz, e.g. 8000000 or 16000000
+# F_CPU : Target frequency in Hz
 ifneq (,$(findstring $(TARGET_SYSTEM),uno pro_trinket_5v))
 F_CPU ?= 16000000
 else
@@ -69,6 +72,7 @@ UPLOAD_PROGRAMMER ?= arduino
 UPLOAD_PORT_CONFIG ?= -b 115200 -P /dev/ttyACM0
 endif
 
+# End of configuration section
 #==============================================================================
 
 #---------------------
@@ -80,7 +84,7 @@ AVR_OBJCOPY = /usr/bin/avr-objcopy
 AVRDUDE = /usr/bin/avrdude
 
 #---------------------------------------------
-# Translate TARGET_SYSTEM into compiler flags
+# Translate configuration into compiler flags
 
 ifneq (,$(findstring $(TARGET_SYSTEM),uno pro_trinket_5v))
 mcu = atmega328p
@@ -92,7 +96,7 @@ endif
 
 # Arduino core path
 ifneq (,$(findstring $(TARGET_SYSTEM),tiny_84 tiny_85))
-arduino_core = /home/$(USER)/Arduino/tiny/avr/cores/tiny
+arduino_core = $(SKETCHBOOK_PATH)/tiny/avr/cores/tiny
 else
 arduino_core = $(ARDUINO_AVR)/cores/arduino
 endif
@@ -106,7 +110,7 @@ defines += -DARDUINO_AVR_UNO
 endif
 
 # Intermediate files
-out_path = .makeArduino
+out_path = .mkout
 sketch_cpp = $(out_path)/$(SKETCH_NAME).cpp
 sketch_elf = $(out_path)/$(SKETCH_NAME).elf
 sketch_hex = $(out_path)/$(SKETCH_NAME).hex
@@ -168,7 +172,6 @@ all: compile upload
 build: clean compile
 
 clean:
-	$(info #### Cleanup)
 	rm -rfd "$(out_path)"
 
 compile: $(out_path) $(lib_out_paths) $(sketch_hex)
@@ -176,8 +179,8 @@ compile: $(out_path) $(lib_out_paths) $(sketch_hex)
 
 upload: compile
 	$(info #### Upload to $(TARGET_SYSTEM))
-	$(AVRDUDE) -q -p $(mcu) -C $(avrdude_conf) -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG) \
-	   -U flash:w:$(sketch_hex):i
+	$(AVRDUDE) -p $(mcu) -C $(avrdude_conf) -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG) \
+		-U flash:w:$(sketch_hex):i
 	$(info #### Upload complete)
 
 $(out_path):
