@@ -40,18 +40,24 @@ INCLUDE_LIBS ?=
 
 # ARDUINO_PATH : Path to arduino folder
 ARDUINO_PATH ?= /home/$(USER)/arduino-1.8.1
-# ARDUINO_AVR : Path to "hardware/arduino/avr" folder
-ARDUINO_AVR ?= $(ARDUINO_PATH)/hardware/arduino/avr
+# ARDUINO_AVR_PATH : Path to "hardware/arduino/avr" folder
+ARDUINO_AVR_PATH ?= $(ARDUINO_PATH)/hardware/arduino/avr
 # PACKAGES_PATH : Path to packages folder
 PACKAGES_PATH ?= /home/$(USER)/.arduino15
 # SKETCHBOOK_PATH : Path to the user sketchbook
 SKETCHBOOK_PATH ?= /home/$(USER)/Arduino
+# ARDUINO_CORE_PATH: Path to arduino core
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
+ARDUINO_CORE_PATH ?= $(SKETCHBOOK_PATH)/tiny/avr/cores/tiny
+else
+ARDUINO_CORE_PATH ?= $(ARDUINO_AVR_PATH)/cores/arduino
+endif
 # LIBRARY_PATHS : List of paths to libraries
 LIBRARY_PATHS += $(SKETCHBOOK_PATH)/libraries
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 LIBRARY_PATHS += $(PACKAGES_PATH)/adafruit/hardware/avr/1.4.9/libraries
 endif
-LIBRARY_PATHS += $(ARDUINO_AVR)/libraries $(ARDUINO_PATH)/libraries
+LIBRARY_PATHS += $(ARDUINO_AVR_PATH)/libraries $(ARDUINO_PATH)/libraries
 
 # F_CPU : Target frequency in Hz
 ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v))
@@ -92,13 +98,6 @@ else ifeq ($(TARGET_SYSTEM),tiny_85)
 mcu = attiny85
 endif
 
-# Arduino core path
-ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
-arduino_core := $(SKETCHBOOK_PATH)/tiny/avr/cores/tiny
-else
-arduino_core := $(ARDUINO_AVR)/cores/arduino
-endif
-
 # Defines
 defines := -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
@@ -118,9 +117,9 @@ local_o := $(addprefix $(out_path)/,$(addsuffix .o,$(notdir $(wildcard *.cpp))))
 # Core and libraries
 include_flags := -I.
 ifeq ($(TARGET_SYSTEM),uno)
-include_flags += -I$(ARDUINO_AVR)/variants/standard
+include_flags += -I$(ARDUINO_AVR_PATH)/variants/standard
 else ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
-include_flags += -I$(ARDUINO_AVR)/variants/eightanaloginputs
+include_flags += -I$(ARDUINO_AVR_PATH)/variants/eightanaloginputs
 endif
 lib_out_paths :=
 libs_o :=
@@ -158,7 +157,7 @@ endif
 endif
 endef
 
-$(eval $(call include_library,core,$(arduino_core)))
+$(eval $(call include_library,core,$(ARDUINO_CORE_PATH)))
 _handled_libraries :=
 $(foreach path,$(LIBRARY_PATHS),$(eval \
 	$(foreach name,$(notdir $(wildcard $(path)/*)),$(eval \
@@ -247,7 +246,7 @@ $$(out_path)/$(1)/%.S.o:: $(2)/%.S
 	$$(CC) -c $$(SFLAGS) $$(CFLAGS) $$< -o $$@
 endef
 
-$(eval $(call compile_library,core,$(arduino_core)))
+$(eval $(call compile_library,core,$(ARDUINO_CORE_PATH)))
 _handled_libraries :=
 $(foreach path,$(LIBRARY_PATHS),$(eval \
 	$(foreach name,$(notdir $(wildcard $(path)/*)),$(eval \
