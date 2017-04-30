@@ -7,12 +7,11 @@
 # +------------------------
 # |SKETCH_NAME = Blink.ino
 # |TARGET_SYSTEM = uno
-# |ARDUINO_LIBS =
-# |USER_LIBS =
+# |INCLUDE_LIBS =
 # |include makeArduino.mk
 # +------------------------
 # All local .cpp files are compiled as well as the sketch file and
-# the libraries specified in ARDUINO_LIBS and USER_LIBS 
+# the libraries specified in INCLUDE_LIBS
 #
 # Make targets: all build clean compile upload
 #
@@ -32,7 +31,7 @@ endif
 # TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85
 ifndef TARGET_SYSTEM
 $(error !!!!! TARGET_SYSTEM must be defined)
-else ifeq (,$(findstring $(TARGET_SYSTEM),uno pro_trinket_5v tiny_84 tiny_85))
+else ifeq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v tiny_84 tiny_85))
 $(error !!!!! Unrecognized TARGET_SYSTEM $(TARGET_SYSTEM))
 endif
 
@@ -42,20 +41,14 @@ ARDUINO_PATH ?= /home/$(USER)/arduino-1.8.1
 # SKETCHBOOK_PATH : Path to the user sketchbook
 SKETCHBOOK_PATH ?= /home/$(USER)/Arduino
 
-# ARDUINO_LIB_PATH : Path to arduino libraries folder
-ARDUINO_LIB_PATH ?= $(ARDUINO_PATH)/libraries
+# LIBRARY_PATHS : List of paths to libraries
+LIBRARY_PATHS ?= $(ARDUINO_PATH)/libraries $(ARDUINO_AVR)/libraries $(SKETCHBOOK_PATH)/libraries
 
-# ARDUINO_LIBS : Arduino libraries to include
-ARDUINO_LIBS ?=
-
-# USER_LIB_PATH : Path to user libraries folder
-USER_LIB_PATH ?= $(SKETCHBOOK_PATH)/libraries
-
-# USER_LIBS : User libraries to include
-USER_LIBS ?=
+# INCLUDE_LIBS : Names of libraries to include
+INCLUDE_LIBS ?=
 
 # F_CPU : Target frequency in Hz
-ifneq (,$(findstring $(TARGET_SYSTEM),uno pro_trinket_5v))
+ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v))
 F_CPU ?= 16000000
 else
 F_CPU ?= 8000000
@@ -77,15 +70,6 @@ endif
 # End of configuration section
 #==============================================================================
 
-.PHONY: all build clean
-
-all: compile upload
-
-build: clean compile
-
-clean:
-	rm -rfd $(out_path)
-
 #---------------------
 # Compilers and tools
 
@@ -97,7 +81,7 @@ AVRDUDE = /usr/bin/avrdude
 #---------------------------------------------
 # Translate configuration into compiler flags
 
-ifneq (,$(findstring $(TARGET_SYSTEM),uno pro_trinket_5v))
+ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v))
 mcu = atmega328p
 else ifeq ($(TARGET_SYSTEM),tiny_84)
 mcu = attiny84
@@ -106,14 +90,14 @@ mcu = attiny85
 endif
 
 # Arduino core path
-ifneq (,$(findstring $(TARGET_SYSTEM),tiny_84 tiny_85))
-arduino_core = $(SKETCHBOOK_PATH)/tiny/avr/cores/tiny
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
+arduino_core := $(SKETCHBOOK_PATH)/tiny/avr/cores/tiny
 else
-arduino_core = $(ARDUINO_AVR)/cores/arduino
+arduino_core := $(ARDUINO_AVR)/cores/arduino
 endif
 
 # Defines
-defines = -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR
+defines := -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 defines += -DARDUINO_AVR_PROTRINKET5
 else ifeq ($(TARGET_SYSTEM),uno)
@@ -121,43 +105,63 @@ defines += -DARDUINO_AVR_UNO
 endif
 
 # Intermediate files
-out_path = .mkout
-sketch_cpp = $(out_path)/$(SKETCH_NAME).cpp
-sketch_elf = $(out_path)/$(SKETCH_NAME).elf
-sketch_hex = $(out_path)/$(SKETCH_NAME).hex
-sketch_o = $(out_path)/$(SKETCH_NAME).cpp.o
-local_o = $(addprefix $(out_path)/,$(addsuffix .o,$(notdir $(wildcard *.cpp))))
+out_path := .mkout
+sketch_cpp := $(out_path)/$(SKETCH_NAME).cpp
+sketch_elf := $(out_path)/$(SKETCH_NAME).elf
+sketch_hex := $(out_path)/$(SKETCH_NAME).hex
+sketch_o := $(out_path)/$(SKETCH_NAME).cpp.o
+local_o := $(addprefix $(out_path)/,$(addsuffix .o,$(notdir $(wildcard *.cpp))))
 
 # Core and libraries
-include_flags = -I.
+include_flags := -I.
 ifeq ($(TARGET_SYSTEM),uno)
 include_flags += -I$(ARDUINO_AVR)/variants/standard
 else ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 include_flags += -I$(ARDUINO_AVR)/variants/eightanaloginputs
 endif
+lib_out_paths :=
+libs_o :=
 
-define library_template =
+define include_library =
 include_flags += -I$(2)
 lib_out_paths += $$(out_path)/$(1)
-libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,$$(notdir $$(wildcard $(2)/*.c))))
-libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,$$(notdir $$(wildcard $(2)/*.cpp))))
-libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,$$(notdir $$(wildcard $(2)/*.S))))
-$$(out_path)/$(1):
-	mkdir $$@
-$$(out_path)/$(1)/%.c.o:: $(2)/%.c
-	$$(info #### Compile $$<)
-	$$(CC) -c $$(CFLAGS) $$< -o $$@
-$$(out_path)/$(1)/%.cpp.o:: $(2)/%.cpp
-	$$(info #### Compile $$<)
-	$$(CXX) -c $$(CXXFLAGS) $$< -o $$@
-$$(out_path)/$(1)/%.S.o:: $(2)/%.S
-	$$(info #### Compile $$<)
-	$$(CC) -c $$(SFLAGS) $$(CFLAGS) $$< -o $$@
+libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
+	$$(notdir $$(wildcard $(2)/*.c))))
+libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
+	$$(notdir $$(wildcard $(2)/*.cpp))))
+libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
+	$$(notdir $$(wildcard $(2)/*.S))))
 endef
 
-$(eval $(call library_template,core,$(arduino_core)))
-$(foreach lib,$(ARDUINO_LIBS),$(eval $(call library_template,$(lib),$(ARDUINO_LIB_PATH)/$(lib)/src)))
-$(foreach lib,$(USER_LIBS),$(eval $(call library_template,$(lib),$(USER_LIB_PATH)/$(lib))))
+define handle_library =
+ifneq (,$$(filter $(1),$$(INCLUDE_LIBS)))
+ifeq (,$$(filter $(1),$$(_handled_libraries)))
+ifneq (0,$$(words \
+	$$(wildcard $(2)/*.h) \
+	$$(wildcard $(2)/*.c) \
+	$$(wildcard $(2)/*.cpp) \
+	$$(wildcard $(2)/*.S)))
+_handled_libraries += $(1)
+$$(eval $$(call $(3),$(1),$(2)))
+else ifneq (0,$$(words \
+	$$(wildcard $(2)/src/*.h) \
+	$$(wildcard $(2)/src/*.c) \
+	$$(wildcard $(2)/src/*.cpp) \
+	$$(wildcard $(2)/src/*.S)))
+_handled_libraries += $(1)
+$$(eval $$(call $(3),$(1),$(2)/src))
+endif
+endif
+endif
+endef
+
+$(eval $(call include_library,core,$(arduino_core)))
+_handled_libraries :=
+$(foreach path,$(LIBRARY_PATHS),$(eval \
+	$(foreach name,$(notdir $(wildcard $(path)/*)),$(eval \
+		$(call handle_library,$(name),$(path)/$(name),include_library)\
+	))\
+))
 
 # Flags
 c_common_flags = -g -Os -w -Wall $(defines) $(include_flags) \
@@ -165,7 +169,7 @@ c_common_flags = -g -Os -w -Wall $(defines) $(include_flags) \
 CFLAGS = $(c_common_flags)
 CXXFLAGS = $(c_common_flags) -fno-exceptions
 SFLAGS = -x assembler-with-cpp
-ifneq (,$(findstring $(TARGET_SYSTEM),tiny_84 tiny_85))
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 CFLAGS += -std=gnu99
 else
 CFLAGS += -std=gnu11
@@ -176,7 +180,14 @@ avrdude_conf = /etc/avrdude.conf
 #-------------------
 # Targets and rules
 
-.PHONY: compile upload
+.PHONY: all build clean compile upload
+
+all: compile upload
+
+build: clean compile
+
+clean:
+	rm -rfd $(out_path)
 
 compile: $(out_path) $(lib_out_paths) $(sketch_hex)
 
@@ -201,7 +212,7 @@ $(sketch_elf): $(sketch_o) $(local_o) $(libs_o)
 # Generate sketch .cpp from .ino
 $(sketch_cpp): $(SKETCH_NAME)
 	$(info #### Generate $@)
-ifneq (,$(findstring $(TARGET_SYSTEM),tiny_84 tiny_85))
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 	@echo '#include "WProgram.h"'>$@
 else
 	@echo '#include "Arduino.h"'>$@
@@ -217,3 +228,26 @@ $(out_path)/%.cpp.o:: $(out_path)/%.cpp
 $(out_path)/%.cpp.o:: %.cpp
 	$(info #### Compile $<)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+# Compile library files
+define compile_library =
+$$(out_path)/$(1):
+	mkdir $$@
+$$(out_path)/$(1)/%.c.o:: $(2)/%.c
+	$$(info #### Compile $$<)
+	$$(CC) -c $$(CFLAGS) $$< -o $$@
+$$(out_path)/$(1)/%.cpp.o:: $(2)/%.cpp
+	$$(info #### Compile $$<)
+	$$(CXX) -c $$(CXXFLAGS) $$< -o $$@
+$$(out_path)/$(1)/%.S.o:: $(2)/%.S
+	$$(info #### Compile $$<)
+	$$(CC) -c $$(SFLAGS) $$(CFLAGS) $$< -o $$@
+endef
+
+$(eval $(call compile_library,core,$(arduino_core)))
+_handled_libraries :=
+$(foreach path,$(LIBRARY_PATHS),$(eval \
+	$(foreach name,$(notdir $(wildcard $(path)/*)),$(eval \
+		$(call handle_library,$(name),$(path)/$(name),compile_library)\
+	))\
+))

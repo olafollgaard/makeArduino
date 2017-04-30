@@ -3,7 +3,6 @@
 
 SKETCH_NAME = Test.ino
 TARGET_SYSTEM = uno
-ARDUINO_LIBS =
-USER_LIBS =
+INCLUDE_LIBS =
 
 include ../makeArduino/makeArduino.mk
