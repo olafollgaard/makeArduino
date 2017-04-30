@@ -35,17 +35,23 @@ else ifeq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v tiny_84 tiny_85))
 $(error !!!!! Unrecognized TARGET_SYSTEM $(TARGET_SYSTEM))
 endif
 
-# ARDUINO_PATH : Path to arduino folder
-ARDUINO_PATH ?= /home/$(USER)/arduino-1.8.1
-
-# SKETCHBOOK_PATH : Path to the user sketchbook
-SKETCHBOOK_PATH ?= /home/$(USER)/Arduino
-
-# LIBRARY_PATHS : List of paths to libraries
-LIBRARY_PATHS ?= $(ARDUINO_PATH)/libraries $(ARDUINO_AVR)/libraries $(SKETCHBOOK_PATH)/libraries
-
 # INCLUDE_LIBS : Names of libraries to include
 INCLUDE_LIBS ?=
+
+# ARDUINO_PATH : Path to arduino folder
+ARDUINO_PATH ?= /home/$(USER)/arduino-1.8.1
+# ARDUINO_AVR : Path to "hardware/arduino/avr" folder
+ARDUINO_AVR ?= $(ARDUINO_PATH)/hardware/arduino/avr
+# PACKAGES_PATH : Path to packages folder
+PACKAGES_PATH ?= /home/$(USER)/.arduino15
+# SKETCHBOOK_PATH : Path to the user sketchbook
+SKETCHBOOK_PATH ?= /home/$(USER)/Arduino
+# LIBRARY_PATHS : List of paths to libraries
+LIBRARY_PATHS += $(SKETCHBOOK_PATH)/libraries
+ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
+LIBRARY_PATHS += $(PACKAGES_PATH)/adafruit/hardware/avr/1.4.9/libraries
+endif
+LIBRARY_PATHS += $(ARDUINO_AVR)/libraries $(ARDUINO_PATH)/libraries
 
 # F_CPU : Target frequency in Hz
 ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v))
@@ -53,9 +59,6 @@ F_CPU ?= 16000000
 else
 F_CPU ?= 8000000
 endif
-
-# ARDUINO_AVR : Path to "hardware/arduino/avr" folder
-ARDUINO_AVR ?= $(ARDUINO_PATH)/hardware/arduino/avr
 
 # UPLOAD_PROGRAMMER : Programmer type for uploader
 # UPLOAD_PORT_CONFIG : Port configuration for the uploader
