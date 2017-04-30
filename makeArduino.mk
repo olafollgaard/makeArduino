@@ -128,28 +128,16 @@ define include_library =
 include_flags += -I$(2)
 lib_out_paths += $$(out_path)/$(1)
 libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
-	$$(notdir $$(wildcard $(2)/*.c))))
-libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
-	$$(notdir $$(wildcard $(2)/*.cpp))))
-libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
-	$$(notdir $$(wildcard $(2)/*.S))))
+	$$(notdir $$(wildcard $$(addprefix $(2)/*.,c cpp S)))))
 endef
 
 define handle_library =
 ifneq (,$$(filter $(1),$$(INCLUDE_LIBS)))
 ifeq (,$$(filter $(1),$$(_handled_libraries)))
-ifneq (0,$$(words \
-	$$(wildcard $(2)/*.h) \
-	$$(wildcard $(2)/*.c) \
-	$$(wildcard $(2)/*.cpp) \
-	$$(wildcard $(2)/*.S)))
+ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/*.,h c cpp S))))
 _handled_libraries += $(1)
 $$(eval $$(call $(3),$(1),$(2)))
-else ifneq (0,$$(words \
-	$$(wildcard $(2)/src/*.h) \
-	$$(wildcard $(2)/src/*.c) \
-	$$(wildcard $(2)/src/*.cpp) \
-	$$(wildcard $(2)/src/*.S)))
+else ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/src/*.,h c cpp S))))
 _handled_libraries += $(1)
 $$(eval $$(call $(3),$(1),$(2)/src))
 endif
