@@ -4,12 +4,20 @@
     "version": "0.1.0",
     "tasks": [
         {
+            "taskName": "Compile",
+            "command": "make",
+            "args": [
+                "compile"
+            ],
+            "isBuildCommand": true,
+            "showOutput": "always"
+        },
+        {
             "taskName": "Build",
             "command": "make",
             "args": [
                 "build"
             ],
-            "isBuildCommand": true,
             "showOutput": "always"
         },
         {
