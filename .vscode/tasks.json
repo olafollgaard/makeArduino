@@ -4,19 +4,19 @@
     "version": "0.1.0",
     "tasks": [
         {
-            "taskName": "Compile",
+            "taskName": "Build",
             "command": "make",
             "args": [
-                "compile"
+                "build"
             ],
             "isBuildCommand": true,
             "showOutput": "always"
         },
         {
-            "taskName": "Build",
+            "taskName": "Full build",
             "command": "make",
             "args": [
-                "build"
+                "fullbuild"
             ],
             "showOutput": "always"
         },
