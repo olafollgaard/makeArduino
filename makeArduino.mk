@@ -13,7 +13,7 @@
 # All local .cpp files are compiled as well as the sketch file and
 # the libraries specified in INCLUDE_LIBS
 #
-# Make targets: all build clean compile upload
+# Make targets: all build fullbuild mostlyclean realclean clean compile upload
 #
 # Core libraries used:
 # uno, pro_trinket_5v: Libraries from Arudino IDE 1.8.1
@@ -170,13 +170,18 @@ avrdude_conf = /etc/avrdude.conf
 #-------------------
 # Targets and rules
 
-.PHONY: all build clean compile upload
+.PHONY: all build fullbuild mostlyclean realclean clean compile upload
 
-all: compile upload
+all: build upload
 
-build: clean compile
+build: mostlyclean compile
 
-clean:
+fullbuild: realclean compile
+
+mostlyclean:
+	rm -f $(out_path)/*.*
+
+realclean clean:
 	rm -rfd $(out_path)
 
 compile: $(out_path) $(lib_out_paths) $(sketch_hex)
