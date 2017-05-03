@@ -87,6 +87,39 @@ CXX = /usr/bin/avr-g++
 AVR_OBJCOPY = /usr/bin/avr-objcopy 
 AVRDUDE = /usr/bin/avrdude
 
+#----------------------------------------------------------
+# Utility method for handling libraries and any subfolders
+# that contain .h, .c, .cpp or .S files
+
+# Parameters: (library name, library path, method name)
+define handle_library =
+ifneq (,$$(filter $(1),$$(INCLUDE_LIBS)))
+ifeq (,$$(filter $(1),$$(_handled_libraries)))
+ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/*.,h c cpp S))))
+_handled_libraries += $(1)
+$$(eval $$(call handle_library_folder_recursive,$(1),$(2),$(3)))
+else ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/src/*.,h c cpp S))))
+_handled_libraries += $(1)
+$$(eval $$(call handle_library_folder_recursive,$(1),$(2)/src,$(3)))
+endif
+endif
+endif
+endef
+
+# Internal method used by handle_library
+define handle_library_folder_recursive =
+ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/*.,h c cpp S))))
+ifneq (,$$(findstring /,$(1)))
+$$(info #  + $(1))
+else
+$$(info # $(3) $(1))
+endif
+$$(eval $$(call $(3),$(1),$(2)))
+$$(foreach sub,$$(notdir $$(wildcard $(2)/*)),\
+	$$(eval $$(call handle_library_folder_recursive,$(1)/$$(sub),$(2)/$$(sub),$(3))))
+endif
+endef
+
 #---------------------------------------------
 # Translate configuration into compiler flags
 
@@ -129,20 +162,6 @@ include_flags += -I$(2)
 lib_out_paths += $$(out_path)/$(1)
 libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
 	$$(notdir $$(wildcard $$(addprefix $(2)/*.,c cpp S)))))
-endef
-
-define handle_library =
-ifneq (,$$(filter $(1),$$(INCLUDE_LIBS)))
-ifeq (,$$(filter $(1),$$(_handled_libraries)))
-ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/*.,h c cpp S))))
-_handled_libraries += $(1)
-$$(eval $$(call $(3),$(1),$(2)))
-else ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/src/*.,h c cpp S))))
-_handled_libraries += $(1)
-$$(eval $$(call $(3),$(1),$(2)/src))
-endif
-endif
-endif
 endef
 
 $(eval $(call include_library,core,$(ARDUINO_CORE_PATH)))
@@ -225,7 +244,7 @@ $(out_path)/%.cpp.o:: %.cpp
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 # Compile library files
-define compile_library =
+define define_library_rules =
 $$(out_path)/$(1):
 	mkdir $$@
 $$(out_path)/$(1)/%.c.o:: $(2)/%.c
@@ -239,10 +258,10 @@ $$(out_path)/$(1)/%.S.o:: $(2)/%.S
 	$$(CC) -c $$(SFLAGS) $$(CFLAGS) $$< -o $$@
 endef
 
-$(eval $(call compile_library,core,$(ARDUINO_CORE_PATH)))
+$(eval $(call define_library_rules,core,$(ARDUINO_CORE_PATH)))
 _handled_libraries :=
 $(foreach path,$(LIBRARY_PATHS),$(eval \
 	$(foreach name,$(notdir $(wildcard $(path)/*)),$(eval \
-		$(call handle_library,$(name),$(path)/$(name),compile_library)\
+		$(call handle_library,$(name),$(path)/$(name),define_library_rules)\
 	))\
 ))
