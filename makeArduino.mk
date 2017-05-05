@@ -84,39 +84,40 @@ endif
 
 CC = /usr/bin/avr-gcc
 CXX = /usr/bin/avr-g++
-AVR_OBJCOPY = /usr/bin/avr-objcopy 
+AVR_OBJCOPY = /usr/bin/avr-objcopy
 AVRDUDE = /usr/bin/avrdude
 
 #----------------------------------------------------------
 # Utility method for handling libraries and any subfolders
 # that contain .h, .c, .cpp or .S files
 
-# Parameters: (library name, library path, method name)
+# Parameters: (function name, library name, library path)
 define handle_library =
-ifneq (,$$(filter $(1),$$(INCLUDE_LIBS)))
-ifeq (,$$(filter $(1),$$(_handled_libraries)))
-ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/*.,h c cpp S))))
-_handled_libraries += $(1)
-$$(eval $$(call handle_library_folder_recursive,$(1),$(2),$(3)))
-else ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/src/*.,h c cpp S))))
-_handled_libraries += $(1)
-$$(eval $$(call handle_library_folder_recursive,$(1),$(2)/src,$(3)))
+ifneq (,$$(filter $(2),$$(INCLUDE_LIBS)))
+ifeq (,$$(filter $(2),$$(_handled_libraries)))
+ifneq (0,$$(words $$(wildcard $$(addprefix $(3)/*.,h c cpp S))))
+_handled_libraries += $(2)
+$$(eval $$(call handle_folder,$(1),$(2),$(3)))
+else ifneq (0,$$(words $$(wildcard $$(addprefix $(3)/src/*.,h c cpp S))))
+_handled_libraries += $(2)
+$$(eval $$(call handle_folder,$(1),$(2),$(3)/src))
 endif
 endif
 endif
 endef
 
-# Internal method used by handle_library
-define handle_library_folder_recursive =
-ifneq (0,$$(words $$(wildcard $$(addprefix $(2)/*.,h c cpp S))))
-ifneq (,$$(findstring /,$(1)))
-$$(info #  + $(1))
-else
-$$(info # $(3) $(1))
+# Parameters: (function name, name, path)
+define handle_folder =
+ifeq (,$$(filter .git .vscode $$(out_path),$(2)))
+ifneq (0,$$(words $$(wildcard $$(addprefix $(3)/*.,h c cpp S))))
+ifneq (/,$$(findstring /,$(2)))
+$$(info # $(1) $(2):)
 endif
-$$(eval $$(call $(3),$(1),$(2)))
-$$(foreach sub,$$(notdir $$(wildcard $(2)/*)),\
-	$$(eval $$(call handle_library_folder_recursive,$(1)/$$(sub),$(2)/$$(sub),$(3))))
+$$(info #     $(3))
+$$(eval $$(call $(1),$(2),$(3)))
+$$(foreach sub,$$(notdir $$(wildcard $(3)/*)),\
+	$$(eval $$(call handle_folder,$(1),$(2)/$$(sub),$(3)/$$(sub))))
+endif
 endif
 endef
 
@@ -144,8 +145,8 @@ out_path := .mkout
 sketch_cpp := $(out_path)/$(SKETCH_NAME).cpp
 sketch_elf := $(out_path)/$(SKETCH_NAME).elf
 sketch_hex := $(out_path)/$(SKETCH_NAME).hex
-sketch_o := $(out_path)/$(SKETCH_NAME).cpp.o
-local_o := $(addprefix $(out_path)/,$(addsuffix .o,$(notdir $(wildcard *.cpp))))
+objs_o := $(out_path)/$(SKETCH_NAME).cpp.o
+obj_paths :=
 
 # Core and libraries
 include_flags := -I.
@@ -154,21 +155,22 @@ include_flags += -I$(ARDUINO_AVR_PATH)/variants/standard
 else ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 include_flags += -I$(ARDUINO_AVR_PATH)/variants/eightanaloginputs
 endif
-lib_out_paths :=
-libs_o :=
 
-define include_library =
+define include_folder =
+ifneq (.,$(1))
 include_flags += -I$(2)
-lib_out_paths += $$(out_path)/$(1)
-libs_o += $$(addprefix $$(out_path)/$(1)/,$$(addsuffix .o,\
+obj_paths += $$(out_path)/$(1)
+endif
+objs_o += $$(addprefix $$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/),$$(addsuffix .o,\
 	$$(notdir $$(wildcard $$(addprefix $(2)/*.,c cpp S)))))
 endef
 
-$(eval $(call include_library,core,$(ARDUINO_CORE_PATH)))
+$(eval $(call handle_folder,include_folder,.,.))
+$(eval $(call handle_folder,include_folder,core,$(ARDUINO_CORE_PATH)))
 _handled_libraries :=
 $(foreach path,$(LIBRARY_PATHS),$(eval \
 	$(foreach name,$(notdir $(wildcard $(path)/*)),$(eval \
-		$(call handle_library,$(name),$(path)/$(name),include_library)\
+		$(call handle_library,include_folder,$(name),$(path)/$(name))\
 	))\
 ))
 
@@ -203,10 +205,10 @@ mostlyclean:
 realclean clean:
 	rm -rfd $(out_path)
 
-compile: $(out_path) $(lib_out_paths) $(sketch_hex)
+compile: $(out_path) $(obj_paths) $(sketch_hex)
 
 upload: compile
-	$(info #### Upload to $(TARGET_SYSTEM))
+	$(info # Upload to $(TARGET_SYSTEM))
 	$(AVRDUDE) -p $(mcu) -C $(avrdude_conf) -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG) \
 		-U flash:w:$(sketch_hex):i
 
@@ -215,17 +217,17 @@ $(out_path):
 
 # Convert elf to hex
 $(sketch_hex): $(sketch_elf)
-	$(info #### Convert to $@)
+	$(info # Convert to $@)
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Link to elf
-$(sketch_elf): $(sketch_o) $(local_o) $(libs_o)
-	$(info #### Link to $@)
+$(sketch_elf): $(objs_o)
+	$(info # Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $^
 
 # Generate sketch .cpp from .ino
 $(sketch_cpp): $(SKETCH_NAME)
-	$(info #### Generate $@)
+	$(info # Generate $@)
 ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 	@echo '#include "WProgram.h"'>$@
 else
@@ -235,33 +237,31 @@ endif
 
 # Compile sketch .cpp file
 $(out_path)/%.cpp.o:: $(out_path)/%.cpp
-	$(info #### Compile $<)
+	$(info # Compile $<)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
 
-# Compile local .cpp files
-$(out_path)/%.cpp.o:: %.cpp
-	$(info #### Compile $<)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
-
-# Compile library files
-define define_library_rules =
+# Compile .c, .cpp and .S files
+define define_folder_rules =
+ifneq (.,$(1))
 $$(out_path)/$(1):
 	mkdir $$@
-$$(out_path)/$(1)/%.c.o:: $(2)/%.c
-	$$(info #### Compile $$<)
+endif
+$$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/)%.c.o:: $(2)/%.c
+	$$(info # Compile $$<)
 	$$(CC) -c $$(CFLAGS) $$< -o $$@
-$$(out_path)/$(1)/%.cpp.o:: $(2)/%.cpp
-	$$(info #### Compile $$<)
+$$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/)%.cpp.o:: $(2)/%.cpp
+	$$(info # Compile $$<)
 	$$(CXX) -c $$(CXXFLAGS) $$< -o $$@
-$$(out_path)/$(1)/%.S.o:: $(2)/%.S
-	$$(info #### Compile $$<)
+$$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/)%.S.o:: $(2)/%.S
+	$$(info # Compile $$<)
 	$$(CC) -c $$(SFLAGS) $$(CFLAGS) $$< -o $$@
 endef
 
-$(eval $(call define_library_rules,core,$(ARDUINO_CORE_PATH)))
+$(eval $(call handle_folder,define_folder_rules,.,.))
+$(eval $(call handle_folder,define_folder_rules,core,$(ARDUINO_CORE_PATH)))
 _handled_libraries :=
 $(foreach path,$(LIBRARY_PATHS),$(eval \
 	$(foreach name,$(notdir $(wildcard $(path)/*)),$(eval \
-		$(call handle_library,$(name),$(path)/$(name),define_library_rules)\
+		$(call handle_library,define_folder_rules,$(name),$(path)/$(name))\
 	))\
 ))
