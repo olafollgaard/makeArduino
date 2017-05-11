@@ -4,12 +4,12 @@
 # This makefile is made to be included from a simple Makefile with a few
 # configuration parameters, where only SKETCH_NAME and TARGET_SYSTEM are
 # required, e.g.:
-# +------------------------
+# +--------------------------------------
 # |SKETCH_NAME = Blink.ino
 # |TARGET_SYSTEM = uno
 # |INCLUDE_LIBS =
-# |include makeArduino.mk
-# +------------------------
+# |include ../makeArduino/makeArduino.mk
+# +--------------------------------------
 # All local .cpp files are compiled as well as the sketch file and
 # the libraries specified in INCLUDE_LIBS
 #
