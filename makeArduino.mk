@@ -205,7 +205,7 @@ avrdude_conf = /etc/avrdude.conf
 #-------------------
 # Targets and rules
 
-.PHONY: all build fullbuild mostlyclean realclean clean compile upload
+.PHONY: all build fullbuild mostlyclean realclean clean compile nm upload
 
 all: build upload
 
@@ -222,6 +222,9 @@ realclean clean:
 compile: $(out_path) $(obj_paths) $(sketch_hex)
 	$(info # Read elf stats)
 	readelf -S $(sketch_elf) | perl -ne 's/\.\w+\s+\K(?:\w+\s+){3}(\w+)\s+\w+\s+[B-Z]*A[B-Z]*(?:\s+\d+){3}\s*$$/: $$1\n/ and print'
+
+nm:
+	avr-nm --size-sort -r -C -S $(sketch_elf)
 
 upload: compile
 	$(info # Upload to $(TARGET_SYSTEM))
