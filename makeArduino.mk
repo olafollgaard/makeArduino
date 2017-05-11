@@ -220,6 +220,8 @@ realclean clean:
 	rm -rfd $(out_path)
 
 compile: $(out_path) $(obj_paths) $(sketch_hex)
+	$(info # Read elf stats)
+	readelf -S $(sketch_elf) | perl -ne 's/\.\w+\s+\K(?:\w+\s+){3}(\w+)\s+\w+\s+[B-Z]*A[B-Z]*(?:\s+\d+){3}\s*$$/: $$1\n/ and print'
 
 upload: compile
 	$(info # Upload to $(TARGET_SYSTEM))
