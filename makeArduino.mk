@@ -36,6 +36,12 @@ $(error !!!!! Unrecognized TARGET_SYSTEM $(TARGET_SYSTEM))
 endif
 
 # INCLUDE_LIBS : Names of libraries to include
+# -	All .h, .c, .cpp and .S files are included by default, but you can specify
+#	per library which exact object files to include, e.g. for the Adafruit
+#	Wire library, to include only Wire.cpp and utility/twi.c:
+#LIBRARY_OBJS_Wire = Wire twi
+# -	All subfolders that contain .h, .c, .cpp or .S files are recursed into
+#	and added to the include path
 INCLUDE_LIBS ?=
 
 # ARDUINO_PATH : Path to arduino folder
@@ -52,7 +58,8 @@ ARDUINO_CORE_PATH ?= $(SKETCHBOOK_PATH)/tiny/avr/cores/tiny
 else
 ARDUINO_CORE_PATH ?= $(ARDUINO_AVR_PATH)/cores/arduino
 endif
-# LIBRARY_PATHS : List of paths to libraries
+# LIBRARY_PATHS : List of library root paths, in order of preference in case
+#	of any libraries present in more than one place
 LIBRARY_PATHS += $(SKETCHBOOK_PATH)/libraries
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 LIBRARY_PATHS += $(PACKAGES_PATH)/adafruit/hardware/avr/1.4.9/libraries
@@ -161,8 +168,15 @@ ifneq (.,$(1))
 include_flags += -I$(2)
 obj_paths += $$(out_path)/$(1)
 endif
-objs_o += $$(addprefix $$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/),$$(addsuffix .o,\
-	$$(notdir $$(wildcard $$(addprefix $(2)/*.,c cpp S)))))
+ifneq (,$$(strip $$(LIBRARY_OBJS_$(1))))
+_incl_srcs := $$(notdir $$(wildcard $$(foreach obj,$$(LIBRARY_OBJS_$(1)),$$(addprefix $(2)/$$(obj).,c cpp S))))
+else
+_incl_srcs := $$(notdir $$(wildcard $$(addprefix $(2)/*.,c cpp S)))
+endif
+ifneq (,$$(strip $$(_incl_srcs)))
+$$(info #       + $$(_incl_srcs))
+objs_o += $$(addprefix $$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/),$$(addsuffix .o,$$(_incl_srcs)))
+endif
 endef
 
 $(eval $(call handle_folder,include_folder,.,.))
