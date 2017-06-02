@@ -210,7 +210,7 @@ avrdude_conf = /etc/avrdude.conf
 #-------------------
 # Targets and rules
 
-.PHONY: all build fullbuild mostlyclean realclean clean compile nm upload
+.PHONY: all build fullbuild mostlyclean realclean clean compile nm dumpS upload
 
 all: build upload
 
@@ -230,6 +230,9 @@ compile: $(out_path) $(obj_paths) $(sketch_hex)
 
 nm:
 	avr-nm --size-sort -r -C -S $(sketch_elf)
+
+dumpS:
+	avr-objdump -S -C $(sketch_elf) |less
 
 upload: compile
 	$(info # Upload to $(TARGET_SYSTEM))
