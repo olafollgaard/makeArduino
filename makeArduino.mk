@@ -24,6 +24,7 @@
 
 # SKETCH_NAME : Bare sketch filename
 # (sketch should be in the same directory as the makefile)
+# If you want to use an .ino file, include the .ino suffix, else omit suffix
 ifndef SKETCH_NAME
 $(error !!!!! SKETCH_NAME must be defined)
 endif
@@ -149,10 +150,14 @@ endif
 
 # Intermediate files
 out_path := .mkout
-sketch_cpp := $(out_path)/$(SKETCH_NAME).cpp
 sketch_elf := $(out_path)/$(SKETCH_NAME).elf
 sketch_hex := $(out_path)/$(SKETCH_NAME).hex
+ifeq (.ino,$(suffix $(SKETCH_NAME)))
+sketch_cpp := $(out_path)/$(SKETCH_NAME).cpp
 objs_o := $(out_path)/$(SKETCH_NAME).cpp.o
+else
+objs_o :=
+endif
 obj_paths :=
 
 # Core and libraries
@@ -244,6 +249,7 @@ $(sketch_elf): $(objs_o)
 	$(info # Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $^
 
+ifeq (.ino,$(suffix $(SKETCH_NAME)))
 # Generate sketch .cpp from .ino
 $(sketch_cpp): $(SKETCH_NAME)
 	$(info # Generate $@)
@@ -253,11 +259,11 @@ else
 	@echo '#include "Arduino.h"'>$@
 endif
 	@cat $< >> $@
-
 # Compile sketch .cpp file
 $(out_path)/%.cpp.o:: $(out_path)/%.cpp
 	$(info # Compile $<)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
+endif
 
 # Compile .c, .cpp and .S files
 define define_folder_rules =
