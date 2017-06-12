@@ -61,7 +61,7 @@ ARDUINO_CORE_PATH ?= $(ARDUINO_AVR_PATH)/cores/arduino
 endif
 # LIBRARY_PATHS : List of library root paths, in order of preference in case
 #	of any libraries present in more than one place
-LIBRARY_PATHS += $(SKETCHBOOK_PATH)/libraries
+LIBRARY_PATHS += $(SKETCHBOOK_PATH)/my_libraries $(SKETCHBOOK_PATH)/libraries
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 LIBRARY_PATHS += $(PACKAGES_PATH)/adafruit/hardware/avr/1.4.9/libraries
 endif
