@@ -1,7 +1,4 @@
-#---------------------------------------------------------------
-# Arduino Makefile (should be in the same directory as sketch)
-
-SKETCH_NAME = Test.ino
+PROJECT_NAME = Sample
 TARGET_SYSTEM = uno
 INCLUDE_LIBS =
 

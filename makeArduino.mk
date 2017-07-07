@@ -2,31 +2,31 @@
 # Lightweight makefile for Arduino - olaf.ollgaard@gmail.com
 #
 # This makefile is made to be included from a simple Makefile with a few
-# configuration parameters, where only SKETCH_NAME and TARGET_SYSTEM are
+# configuration parameters, where only PROJECT_NAME and TARGET_SYSTEM are
 # required, e.g.:
 # +--------------------------------------
-# |SKETCH_NAME = Blink.ino
+# |PROJECT_NAME = Sample
 # |TARGET_SYSTEM = uno
 # |INCLUDE_LIBS =
 # |include ../makeArduino/makeArduino.mk
 # +--------------------------------------
-# All local .cpp files are compiled as well as the sketch file and
-# the libraries specified in INCLUDE_LIBS
+# All local .cpp files are compiled as well as the libraries specified in
+# INCLUDE_LIBS. If PROJECT_NAME is an .ino filename, this is compiled too
 #
 # Make targets: all build fullbuild mostlyclean realclean clean compile upload
 #
 # Core libraries used:
-# uno, pro_trinket_5v: Libraries from Arudino IDE 1.8.1
+# uno, pro_trinket_5v: Core from Arudino IDE 1.8.1
 # tiny_84, tiny_85: https://code.google.com/archive/p/arduino-tiny/
 
 #--------------------------------------------------
 # Configuration variables and their default values
 
-# SKETCH_NAME : Bare sketch filename
-# (sketch should be in the same directory as the makefile)
-# If you want to use an .ino file, include the .ino suffix, else omit suffix
-ifndef SKETCH_NAME
-$(error !!!!! SKETCH_NAME must be defined)
+# PROJECT_NAME : Project name, used as name part of .elf and .hex filenames
+# It can also be the filename (excl path, incl suffix) of an .ino sketch
+# file, which should be placed in the same directory as the makefile
+ifndef PROJECT_NAME
+$(error !!!!! PROJECT_NAME must be defined)
 endif
 
 # TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85
@@ -45,27 +45,27 @@ endif
 #	and added to the include path
 INCLUDE_LIBS ?=
 
-# ARDUINO_PATH : Path to arduino folder
-ARDUINO_PATH ?= /home/$(USER)/arduino-1.8.1
+# ARDUINO_IDE_PATH : Path to arduino folder
+ARDUINO_IDE_PATH ?= /home/$(USER)/arduino-1.8.1
 # ARDUINO_AVR_PATH : Path to "hardware/arduino/avr" folder
-ARDUINO_AVR_PATH ?= $(ARDUINO_PATH)/hardware/arduino/avr
+ARDUINO_AVR_PATH ?= $(ARDUINO_IDE_PATH)/hardware/arduino/avr
 # PACKAGES_PATH : Path to packages folder
 PACKAGES_PATH ?= /home/$(USER)/.arduino15
-# SKETCHBOOK_PATH : Path to the user sketchbook
-SKETCHBOOK_PATH ?= /home/$(USER)/Arduino
+# PROJECTS_ROOT_PATH : Path to the user projects root
+PROJECTS_ROOT_PATH ?= /home/$(USER)/Arduino
 # ARDUINO_CORE_PATH: Path to arduino core
 ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
-ARDUINO_CORE_PATH ?= $(SKETCHBOOK_PATH)/tiny/avr/cores/tiny
+ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/tiny/avr/cores/tiny
 else
 ARDUINO_CORE_PATH ?= $(ARDUINO_AVR_PATH)/cores/arduino
 endif
 # LIBRARY_PATHS : List of library root paths, in order of preference in case
 #	of any libraries present in more than one place
-LIBRARY_PATHS += $(SKETCHBOOK_PATH)/my_libraries $(SKETCHBOOK_PATH)/libraries
+LIBRARY_PATHS += $(PROJECTS_ROOT_PATH)/my_libraries $(PROJECTS_ROOT_PATH)/libraries
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 LIBRARY_PATHS += $(PACKAGES_PATH)/adafruit/hardware/avr/1.4.9/libraries
 endif
-LIBRARY_PATHS += $(ARDUINO_AVR_PATH)/libraries $(ARDUINO_PATH)/libraries
+LIBRARY_PATHS += $(ARDUINO_AVR_PATH)/libraries $(ARDUINO_IDE_PATH)/libraries
 
 # F_CPU : Target frequency in Hz
 ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v))
@@ -150,11 +150,11 @@ endif
 
 # Intermediate files
 out_path := .mkout
-sketch_elf := $(out_path)/$(SKETCH_NAME).elf
-sketch_hex := $(out_path)/$(SKETCH_NAME).hex
-ifeq (.ino,$(suffix $(SKETCH_NAME)))
-sketch_cpp := $(out_path)/$(SKETCH_NAME).cpp
-objs_o := $(out_path)/$(SKETCH_NAME).cpp.o
+project_elf := $(out_path)/$(PROJECT_NAME).elf
+project_hex := $(out_path)/$(PROJECT_NAME).hex
+ifeq (.ino,$(suffix $(PROJECT_NAME)))
+project_cpp := $(out_path)/$(PROJECT_NAME).cpp
+objs_o := $(out_path)/$(PROJECT_NAME).cpp.o
 else
 objs_o :=
 endif
@@ -224,37 +224,37 @@ mostlyclean:
 realclean clean:
 	rm -rfd $(out_path)
 
-compile: $(out_path) $(obj_paths) $(sketch_hex)
+compile: $(out_path) $(obj_paths) $(project_hex)
 	$(info # Read elf stats)
-	readelf -S $(sketch_elf) | perl -ne 's/\.\w+\s+\K(?:\w+\s+){3}(\w+)\s+\w+\s+[B-Z]*A[B-Z]*(?:\s+\d+){3}\s*$$/: $$1\n/ and print'
+	readelf -S $(project_elf) | perl -ne 's/\.\w+\s+\K(?:\w+\s+){3}(\w+)\s+\w+\s+[B-Z]*A[B-Z]*(?:\s+\d+){3}\s*$$/: $$1\n/ and print'
 
 nm:
-	avr-nm --size-sort -r -C -S $(sketch_elf)
+	avr-nm --size-sort -r -C -S $(project_elf)
 
 dumpS:
-	avr-objdump -S -C $(sketch_elf) |less
+	avr-objdump -S -C $(project_elf) |less
 
 upload: compile
 	$(info # Upload to $(TARGET_SYSTEM))
 	$(AVRDUDE) -p $(mcu) -C $(avrdude_conf) -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG) \
-		-U flash:w:$(sketch_hex):i
+		-U flash:w:$(project_hex):i
 
 $(out_path):
 	mkdir $@
 
 # Convert elf to hex
-$(sketch_hex): $(sketch_elf)
+$(project_hex): $(project_elf)
 	$(info # Convert to $@)
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Link to elf
-$(sketch_elf): $(objs_o)
+$(project_elf): $(objs_o)
 	$(info # Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $^
 
-ifeq (.ino,$(suffix $(SKETCH_NAME)))
-# Generate sketch .cpp from .ino
-$(sketch_cpp): $(SKETCH_NAME)
+ifeq (.ino,$(suffix $(PROJECT_NAME)))
+# Generate project .cpp from .ino
+$(project_cpp): $(PROJECT_NAME)
 	$(info # Generate $@)
 ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 	@echo '#include "WProgram.h"'>$@
@@ -262,7 +262,7 @@ else
 	@echo '#include "Arduino.h"'>$@
 endif
 	@cat $< >> $@
-# Compile sketch .cpp file
+# Compile project .cpp file
 $(out_path)/%.cpp.o:: $(out_path)/%.cpp
 	$(info # Compile $<)
 	$(CXX) -c $(CXXFLAGS) $< -o $@
