@@ -79,6 +79,9 @@ endif
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 UPLOAD_PROGRAMMER = usbtiny
 UPLOAD_PORT_CONFIG =
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
+UPLOAD_PROGRAMMER ?= stk500v1
+UPLOAD_PORT_CONFIG ?= -b 19200 -P /dev/ttyACM0
 else
 UPLOAD_PROGRAMMER ?= arduino
 UPLOAD_PORT_CONFIG ?= -b 115200 -P /dev/ttyACM0
