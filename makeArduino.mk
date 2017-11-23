@@ -87,6 +87,13 @@ UPLOAD_PROGRAMMER ?= arduino
 UPLOAD_PORT_CONFIG ?= -b 115200 -P /dev/ttyACM0
 endif
 
+# FUSES_CONFIG : Fuses to "burn"
+ifeq ($(TARGET_SYSTEM),tiny_84)
+# TODO
+else ifeq ($(TARGET_SYSTEM),tiny_85)
+FUSES_CONFIG ?= -U efuse:w:0xff:m -U hfuse:w:0xdf:m -U lfuse:w:0xe2:m
+endif
+
 # End of configuration section
 #==============================================================================
 
@@ -209,12 +216,12 @@ else
 CFLAGS += -std=gnu11
 CXXFLAGS += -std=gnu++11
 endif
-avrdude_conf = /etc/avrdude.conf
+avrdude_flags = -p $(mcu) -C /etc/avrdude.conf -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG)
 
 #-------------------
 # Targets and rules
 
-.PHONY: all build fullbuild mostlyclean realclean clean compile nm dumpS upload
+.PHONY: all burnfuses build fullbuild mostlyclean realclean clean compile nm dumpS upload
 
 all: build upload
 
@@ -238,10 +245,13 @@ nm:
 dumpS:
 	avr-objdump -S -C $(project_elf) |less
 
+burnfuses:
+	$(info # "Burn" $(TARGET_SYSTEM) fuses)
+	$(AVRDUDE) $(avrdude_flags) -e $(FUSES_CONFIG)
+
 upload: compile
 	$(info # Upload to $(TARGET_SYSTEM))
-	$(AVRDUDE) -p $(mcu) -C $(avrdude_conf) -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG) \
-		-U flash:w:$(project_hex):i
+	$(AVRDUDE) $(avrdude_flags) -U flash:w:$(project_hex):i
 
 $(out_path):
 	mkdir $@
