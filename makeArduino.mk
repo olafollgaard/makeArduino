@@ -159,6 +159,7 @@ else
 objs_o :=
 endif
 obj_paths :=
+includepaths_json := $(out_path)/includepaths.json
 
 # Core and libraries
 include_flags := -I.
@@ -248,9 +249,16 @@ $(project_hex): $(project_elf)
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Link to elf
-$(project_elf): $(objs_o)
+$(project_elf): $(includepaths_json) $(objs_o)
 	$(info # Link to $@)
-	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $^
+	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $(objs_o)
+
+# Generate includepaths json for use in c_cpp_properties.json
+$(includepaths_json):
+	$(file > $@,[)
+	$(foreach path,$(include_flags),$(file >> $@,	"$(path:-I%=%)",))
+	$(file >> $@,	".")
+	$(file >> $@,])
 
 ifeq (.ino,$(suffix $(PROJECT_NAME)))
 # Generate project .cpp from .ino
