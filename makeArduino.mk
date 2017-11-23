@@ -89,7 +89,7 @@ endif
 
 # FUSES_CONFIG : Fuses to "burn"
 ifeq ($(TARGET_SYSTEM),tiny_84)
-# TODO
+FUSES_CONFIG ?= -U efuse:w:0xff:m -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
 else ifeq ($(TARGET_SYSTEM),tiny_85)
 FUSES_CONFIG ?= -U efuse:w:0xff:m -U hfuse:w:0xdf:m -U lfuse:w:0xe2:m
 endif
