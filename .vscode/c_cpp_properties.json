@@ -11,9 +11,12 @@
                 "databaseFilename": "",
                 "path": [
                     "/home/$(USER)/Arduino/tiny/avr/cores/tiny",
-                    "/home/$(USER)/arduino-1.8.1/hardware/arduino/avr/cores/arduino"
+                    "/home/$(USER)/arduino-1.8.1/hardware/arduino/avr/cores/arduino",
+                    "${workspaceRoot}"
                 ]
-            }
+            },
+            "intelliSenseMode": "clang-x64"
         }
-    ]
+    ],
+    "version": 3
 }
