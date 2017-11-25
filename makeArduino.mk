@@ -90,9 +90,7 @@ UPLOAD_PORT_CONFIG ?= -b 115200 -P /dev/ttyACM0
 endif
 
 # FUSES_CONFIG : Fuses to "burn"
-ifeq ($(TARGET_SYSTEM),tiny_84)
-FUSES_CONFIG ?= -U efuse:w:0xff:m -U hfuse:w:0xdf:m -U lfuse:w:0x62:m
-else ifeq ($(TARGET_SYSTEM),tiny_85)
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 FUSES_CONFIG ?= -U efuse:w:0xff:m -U hfuse:w:0xdf:m -U lfuse:w:0xe2:m
 endif
 
