@@ -156,6 +156,8 @@ ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 defines += -DARDUINO_AVR_PROTRINKET5
 else ifeq ($(TARGET_SYSTEM),uno)
 defines += -DARDUINO_AVR_UNO
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
+defines += -DARDUINO_attiny
 endif
 
 # Intermediate files
