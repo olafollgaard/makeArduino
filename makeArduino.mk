@@ -47,6 +47,8 @@ INCLUDE_LIBS ?=
 
 # ARDUINO_IDE_PATH : Path to arduino folder
 ARDUINO_IDE_PATH ?= /home/$(USER)/arduino-1.8.1
+# ARDUINO_TOOLS_PATH : Path to arduino build tools
+ARDUINO_TOOLS_PATH ?= $(ARDUINO_IDE_PATH)/hardware/tools/avr/bin
 # ARDUINO_AVR_PATH : Path to "hardware/arduino/avr" folder
 ARDUINO_AVR_PATH ?= $(ARDUINO_IDE_PATH)/hardware/arduino/avr
 # PACKAGES_PATH : Path to packages folder
@@ -100,10 +102,10 @@ endif
 #---------------------
 # Compilers and tools
 
-CC = /usr/bin/avr-gcc
-CXX = /usr/bin/avr-g++
-AVR_OBJCOPY = /usr/bin/avr-objcopy
-AVRDUDE = /usr/bin/avrdude
+CC = $(ARDUINO_TOOLS_PATH)/avr-gcc
+CXX = $(ARDUINO_TOOLS_PATH)/avr-g++
+AVR_OBJCOPY = $(ARDUINO_TOOLS_PATH)/avr-objcopy
+AVRDUDE = $(ARDUINO_TOOLS_PATH)/avrdude
 
 #----------------------------------------------------------
 # Utility method for handling libraries and any subfolders
