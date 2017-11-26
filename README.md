@@ -21,6 +21,7 @@ Config variable      | Default            | Usage
 `ARDUINO_IDE_PATH`   | `~/arduino-1.8.1/` | The Arduino IDE 1.8.1
 `PROJECTS_ROOT_PATH` | `~/Arduino/`       | Personal projects
 `LIBRARY_PATHS`      | `~/Arduino/my_libraries` `~/Arduino/libraries` | Home-grown and third-party libraries
+
 There are other nitty-gritty config variables in makeArduino.mk, but these are the most important ones.
 
 The sample `Makefile` looks like this:
@@ -40,6 +41,7 @@ To make a new project, copy the sample `Makefile` into your project folder and u
   It can also be the filename (excl path, incl suffix) of an `.ino` sketch file, which should be placed in the same directory as your `Makefile`. However **I do not reccommend using an .ino file**, since I made some `problemMatcher`s in `.vscode/tasks.json` to get integrated error messages and locations in VSCode, and they produce confusing file names and locations for compile errors in `.ino` files.
 
 * `TARGET_SYSTEM` specifies which hardware the project is aimed at:
+
   Value            | Hardware
   ---------------- | ------------------------------
   `uno`            | Plain old Arduino Uno R3 board
