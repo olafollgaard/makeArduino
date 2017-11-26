@@ -3,6 +3,7 @@
         {
             "name": "Linux",
             "includePath": [
+                "/home/$(USER)/arduino-1.8.1/hardware/tools/avr/avr/include",
                 "/home/$(USER)/Arduino/tiny/avr/cores/tiny",
                 "/home/$(USER)/arduino-1.8.1/hardware/arduino/avr/cores/arduino"
             ],
@@ -10,6 +11,7 @@
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": "",
                 "path": [
+                    "/home/$(USER)/arduino-1.8.1/hardware/tools/avr/avr/include",
                     "/home/$(USER)/Arduino/tiny/avr/cores/tiny",
                     "/home/$(USER)/arduino-1.8.1/hardware/arduino/avr/cores/arduino",
                     "${workspaceRoot}"
