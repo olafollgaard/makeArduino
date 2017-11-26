@@ -60,6 +60,20 @@ To make a new project, copy the sample `Makefile` into your project folder and u
   ```
   All subfolders that contain `.h`, `.c`, `.cpp` or `.S` files are recursed into and added to the include path.
 
+### Targets in makeArduino.mk
+Target              | Purpose
+------------------- | --------------------------------------------------
+`all`               | Rebuild project, libs only if changed, and upload
+`burnfuses`         | "Burn" fuses in ATtiny8x mcu, via Arduino ISP
+`build`             | Rebuild project, libs only if changed
+`fullbuild`         | Rebuild everything, both project and libraries
+`mostlyclean`       | Remove project binaries, but not libraries
+`realclean`/`clean` | Remove all binaries
+`compile`           | Compile only what needs compiling
+`nm`                | List what uses the sometimes precious space
+`dumpS`             | Dump dissasembly
+`upload`            | Compile if necessary, then upload to board
+
 ## Using `.vscode/tasks.json`
 //TODO
 ## Using `.vscode/c_cpp_properties.json`
