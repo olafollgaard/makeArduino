@@ -5,12 +5,12 @@ I decided on **Visual Studio Code** with an **old-school makefile** for building
 
 As the makefile got more complex, it led to make it re-usable via `include`, so that each individual project only needed a minimal makefile.
 
-This makefile is the result, and I have used it for a couple of different Arduino projects, some on a `Adafruit Trinket Pro 5V` board, others on `ATtiny85` chips.
+This makefile is the result, and I have used it for a couple of different Arduino projects, some on a **Adafruit Trinket Pro 5V board**, others on **ATtiny85** chips.
 
 ## Using makeArduino.mk
 The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including makeArduino.mk.
 
-For Atmel ATtiny8x chips, `ARDUINO_CORE_PATH` points to the [arduino-tiny](https://code.google.com/archive/p/arduino-tiny/) package, located in `/Arduino/libraries/tiny`.
+For Atmel ATtiny8x chips, `ARDUINO_CORE_PATH` points to the [arduino-tiny](https://code.google.com/archive/p/arduino-tiny/) package, located in `~/Arduino/libraries/tiny`.
 
 Other assumptions may be "hidden", or in plain english: It works on my setup :)
 
@@ -21,6 +21,7 @@ Config variable      | Default            | Usage
 `ARDUINO_IDE_PATH`   | `~/arduino-1.8.1/` | The Arduino IDE 1.8.1
 `PROJECTS_ROOT_PATH` | `~/Arduino/`       | Personal projects
 `LIBRARY_PATHS`      | `~/Arduino/my_libraries` `~/Arduino/libraries` | Home-grown and third-party libraries
+There are other nitty-gritty config variables in makeArduino.mk, but these are the most important ones.
 
 The sample `Makefile` looks like this:
 ```cmake
@@ -34,9 +35,9 @@ include ../makeArduino/makeArduino.mk
 
 To make a new project, copy the sample `Makefile` into your project folder and update the variables to reflect your project:
 
-* `PROJECT_NAME` is used as name part of .elf and .hex filenames, and so must be usable as such; don't use characters like `"`, `:` or `/`.
+* `PROJECT_NAME` is used as name part of `.elf` and `.hex` filenames, and so must be usable as such; don't use characters like `"`, `:` or `/`.
 
-  It can also be the filename (excl path, incl suffix) of an `.ino` sketch file, which should be placed in the same directory as `Makefile`. Initially I used .ino files, but since I made some `problemMatcher`s in `.vscode/tasks.json` to get integrated error messages and locations in VSCode, I dropped the `.ino` file because it gave confusing originating file names and line numbers.
+  It can also be the filename (excl path, incl suffix) of an `.ino` sketch file, which should be placed in the same directory as your `Makefile`. However **I do not reccommend using an .ino file**, since I made some `problemMatcher`s in `.vscode/tasks.json` to get integrated error messages and locations in VSCode, and they produce confusing file names and locations for compile errors in `.ino` files.
 
 * `TARGET_SYSTEM` specifies which hardware the project is aimed at:
   Value            | Hardware
