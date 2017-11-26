@@ -75,9 +75,7 @@ Target              | Purpose
 `upload`            | Compile if necessary, then upload to board
 
 ## Upload prerequisites
-1. Make sure you can use the Arduino IDE to upload a sketch, e.g. Blink, to an
-   Arduino board. I had to fiddle a little with the USB setup in linux before
-   that worked, but it has worked flawlessly since
+1. Make sure you can use the Arduino IDE to upload a sketch, e.g. Blink, to an Arduino board. I had to fiddle a little with the USB setup in linux before that worked, but it has worked flawlessly since
 2. Proceed as follows, depending on which `TARGET_SYSTEM` you are using:
 
 ### `TARGET_SYSTEM` = `uno`
