@@ -5,7 +5,7 @@ I decided on **Visual Studio Code** with an **old-school makefile** for building
 
 As the makefile got more complex, it led to make it re-usable via `include`, so that each individual project only needed a minimal makefile.
 
-This makefile is the result, and I have used it for a couple of different Arduino projects, some on a **Adafruit Trinket Pro 5V board**, others on **ATtiny85** chips.
+This makefile is the result, and I have used it for a couple of Arduino projects, some on a **Adafruit Trinket Pro 5V board**, others on **ATtiny85** chips.
 
 ## Using makeArduino.mk
 The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including makeArduino.mk.
@@ -74,7 +74,55 @@ Target              | Purpose
 `dumpS`             | Dump dissasembly
 `upload`            | Compile if necessary, then upload to board
 
+## Upload prerequisites
+1. Make sure you can use the Arduino IDE to upload a sketch, e.g. Blink, to an
+   Arduino board. I had to fiddle a little with the USB setup in linux before
+   that worked, but it has worked flawlessly since
+2. Proceed as follows, depending on which `TARGET_SYSTEM` you are using:
+
+### `TARGET_SYSTEM` = `uno`
+1. Plug Uno into the USB port, which should show up as /dev/ttyACM0
+2. `make upload`
+
+### `TARGET_SYSTEM` = `pro_trinket_5v`
+1. Plug trinket into the USB port
+2. Press reset button on the board (I have not found out how to auto-reset)
+3. `make upload`
+
+### `TARGET_SYSTEM` = `tiny_84` or `tiny_85`
+1. Plug Uno into the USB port, which should show up as /dev/ttyACM0
+2. From the Arduino IDE, upload the *Arduino as ISP* sketch to an Arduino Uno
+3. Connect pins as follows:
+
+   Arduino | ATtiny85 | ATtiny84
+   ------- | -------- | --------
+   5V      | VCC      | VCC
+   GND     | GND      | GND
+   Pin 13  | PB2      | PA4
+   Pin 12  | PB1      | PA5
+   Pin 11  | PB0      | PA6
+   Pin 10  | PB5      | PB3
+
+   ```
+       ATtiny85 pins            ATtiny84 pins
+          _______                  _______
+    PB5 -|  \_/  |- VCC      VCC -|  \_/  |- GND
+    PB3 -|       |- PB2      PB0 -|       |- PA0
+    PB4 -|       |- PB1      PB1 -|       |- PA1
+    GND -|_______|- PB0      PB3 -|       |- PA2
+                             PB2 -|       |- PA3
+                             PA7 -|       |- PA4
+                             PA6 -|_______|- PA5
+   ```
+
+   (No, I did not mess up the pins :P Check the datasheets)
+
+4. Add a 10uF capacitor between GND and RESET on the Arduino
+5. `make burnfuses`
+6. `make upload`
+
 ## Using `.vscode/tasks.json`
 //TODO
+
 ## Using `.vscode/c_cpp_properties.json`
 //TODO
