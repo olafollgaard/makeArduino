@@ -1,20 +1,16 @@
 # makeArduino
-As a software developer in my daily life, I was immediately annoyed by the Arduino IDE when I started playing with Arduino in the beginning of 2017. This, in classic developer fashion, got me side-tracked, initially spending a lot more time on toolchain setup than on the actual Arduino project... Oh well :)
+As a software developer in my daily life, I was immediately annoyed by the Arduino IDE when I started playing with Arduino in the beginning of 2017. This, in classic developer fashion, got me side-tracked, initially spending a lot more time on toolchain setup than on the actual Arduino project... Oh well, imho it was time well spent in the name of flexibility and ease-of-use :)
 
 I decided on **Visual Studio Code** with an **old-school makefile** for building and uploading to the MCU. At work I am a Windows developer, but at home I use **Ubuntu**, and I have no plans of using this makefile on Windows, though it probably wouldn't be hard to do.
 
-As the makefile got more complex, it led to make it re-usable via `include`, so that each individual project only needed a minimal makefile.
+As the makefile got more complex, it led to make it **re-usable** via `include`, so that each individual project only needed a minimal makefile. Consequently, it must be **project-agnostic**. Most configuration variables can be initialized with project-specific content before the `include` statement.
 
 This makefile is the result, and I have used it for a couple of Arduino projects, some on a **Adafruit Trinket Pro 5V board**, others on **ATtiny85** chips.
 
-## Using makeArduino.mk
+## Assumptions
 The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including makeArduino.mk.
 
 For Atmel ATtiny8x chips, `ARDUINO_CORE_PATH` points to the [arduino-tiny](https://code.google.com/archive/p/arduino-tiny/) package, located in `~/Arduino/libraries/tiny`.
-
-Other assumptions may be "hidden", or in plain english: It works on my setup :)
-
-makeArduino.mk is designed to be read-only, all configuration variables can be initialized before including it.
 
 Config variable      | Default            | Usage
 -------------------- | ------------------ | ----------------------
@@ -24,7 +20,17 @@ Config variable      | Default            | Usage
 
 There are other nitty-gritty config variables in makeArduino.mk, but these are the most important ones.
 
+Other assumptions may be "hidden", or in plain english: It works on my setup :)
+
+## Making a new project
+1. Copy the sample `Makefile` into your project folder and update it to reflect your project, as detailed in the next section
+2. Put your code files beside it in the project folder
+   * All `.c`, `.cpp` and `.S` files in your project folder are compiled
+   * Subfolders that contain `.h`, `.c`, `.cpp` or `.S` files are recursed into, added to the include path, and any `.c`, `.cpp` and `.S` files are compiled
+
+## Typical Makefile contents
 The sample `Makefile` looks like this:
+
 ```cmake
 PROJECT_NAME = Sample
 # TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85
@@ -34,11 +40,9 @@ INCLUDE_LIBS =
 include ../makeArduino/makeArduino.mk
 ```
 
-To make a new project, copy the sample `Makefile` into your project folder and update the variables to reflect your project:
-
 * `PROJECT_NAME` is used as name part of `.elf` and `.hex` filenames, and so must be usable as such; don't use characters like `"`, `:` or `/`.
 
-  It can also be the filename (excl path, incl suffix) of an `.ino` sketch file, which should be placed in the same directory as your `Makefile`. However **I do not reccommend using an .ino file**, since I made some `problemMatcher`s in `.vscode/tasks.json` to get integrated error messages and locations in VSCode, and they produce confusing file names and locations for compile errors in `.ino` files.
+  It can also be the filename (excl path, incl suffix) of an `.ino` sketch file, which should be placed in the same directory as your `Makefile`. It works, but **I do not reccommend using an .ino file**, since I made some `problemMatcher`s in `.vscode/tasks.json` to get integrated compile error messages and locations in VSCode, and they produce confusing file names and locations for compile errors in `.ino` files.
 
 * `TARGET_SYSTEM` specifies which hardware the project is aimed at:
 
@@ -49,30 +53,36 @@ To make a new project, copy the sample `Makefile` into your project folder and u
   `tiny_84`        | Atmel ATtiny84 microcontroller
   `tiny_85`        | Atmel ATtiny85 microcontroller
 
-* `INCLUDE_LIBS` is the most advanced variable in terms of implementing makeArduino.mk, but it is very easy to use, provided that your libraries are located in one of the folders in `LIBRARY_PATHS`, and also, of course, that my "hidden assumptions" are correct :)
+* `INCLUDE_LIBS` is the most advanced variable in terms of implementing makeArduino.mk, but it is very easy to use, provided that your library folders are located in one of the folders in `LIBRARY_PATHS`, and also, of course, that my "hidden assumptions" are correct :)
 
-  It is just a list of names of the libraries you wish to include in your project.
+  It is just a space-separated list of names of the libraries you wish to include in your project.
 
-  All `.h`, `.c`, `.cpp` and `.S` files are included by default, but you can specify per library which exact object files to include, e.g. for the Adafruit Wire library, to include only `Wire.cpp` and `utility/twi.c`:
+  All `.c`, `.cpp` and `.S` files in the library folder are included by default, but you can specify per library which exact object files to include, e.g. for the Adafruit Wire library, to include only `Wire.cpp` and `utility/twi.c`:
+
   ```cmake
   INCLUDE_LIBS = Wire
   LIBRARY_OBJS_Wire = Wire twi
   ```
+
   All subfolders that contain `.h`, `.c`, `.cpp` or `.S` files are recursed into and added to the include path.
 
-### Targets in makeArduino.mk
+## Targets in makeArduino.mk
+The typical `make` targets are `build` and `upload`, but here is a short description of all the main targets:
+
 Target              | Purpose
 ------------------- | --------------------------------------------------
 `all`               | Rebuild project, libs only if changed, and upload
-`burnfuses`         | "Burn" fuses in ATtiny8x mcu, via Arduino ISP
 `build`             | Rebuild project, libs only if changed
 `fullbuild`         | Rebuild everything, both project and libraries
 `mostlyclean`       | Remove project binaries, but not libraries
 `realclean`/`clean` | Remove all binaries
-`compile`           | Compile only what needs compiling
+`compile`           | Compile only changed files
 `nm`                | List what uses the sometimes precious space
 `dumpS`             | Dump dissasembly
-`upload`            | Compile if necessary, then upload to board
+`burnfuses`         | "Burn" fuses in ATtiny8x mcu, via Arduino ISP
+`upload`            | Compile changed files, then upload to board
+
+When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not the `.h` files they depend on. Maybe I'll implement that later, but for now just `build`, it's not as if there is tons of flash for so much code that `build` is unreasonably slower than `compile` :)
 
 ## Upload prerequisites
 1. Make sure you can use the Arduino IDE to upload a sketch, e.g. Blink, to an Arduino board. I had to fiddle a little with the USB setup in linux before that worked, but it has worked flawlessly since
@@ -88,7 +98,7 @@ Target              | Purpose
 3. `make upload`
 
 ### `TARGET_SYSTEM` = `tiny_84` or `tiny_85`
-1. Set up Arduino as ISP (description below)
+1. Set up Arduino as ISP, as detailed below
 2. Plug Arduino ISP into the USB port, which should show up as `/dev/ttyACM0`
 3. `make burnfuses` - this only needs to be done once
 4. `make upload`
@@ -96,7 +106,9 @@ Target              | Purpose
 #### Setting up Arduino as ISP
 1. Plug Arduino into the USB port, which should show up as `/dev/ttyACM0`
 2. From the Arduino IDE, upload the *Arduino as ISP* sketch
-3. Unplug, then connect the following pins to your target ATtiny8x:
+3. Unplug Arduino
+4. Add a 10uF capacitor between GND and RESET on the Arduino
+5. Connect the following pins to your target ATtiny8x:
 
    Arduino | ATtiny85 | ATtiny84
    ------- | -------- | --------
@@ -120,8 +132,6 @@ Target              | Purpose
    ```
 
    (No, I did not mess up the pins :P Check the datasheets)
-
-4. Add a 10uF capacitor between GND and RESET on the Arduino
 
 ## Using `.vscode/tasks.json`
 //TODO
