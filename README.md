@@ -79,7 +79,7 @@ Target              | Purpose
 2. Proceed as follows, depending on which `TARGET_SYSTEM` you are using:
 
 ### `TARGET_SYSTEM` = `uno`
-1. Plug Uno into the USB port, which should show up as /dev/ttyACM0
+1. Plug Uno into the USB port, which should show up as `/dev/ttyACM0`
 2. `make upload`
 
 ### `TARGET_SYSTEM` = `pro_trinket_5v`
@@ -88,9 +88,15 @@ Target              | Purpose
 3. `make upload`
 
 ### `TARGET_SYSTEM` = `tiny_84` or `tiny_85`
-1. Plug Uno into the USB port, which should show up as /dev/ttyACM0
-2. From the Arduino IDE, upload the *Arduino as ISP* sketch to an Arduino Uno
-3. Connect pins as follows:
+1. Set up Arduino as ISP (description below)
+2. Plug Arduino ISP into the USB port, which should show up as `/dev/ttyACM0`
+3. `make burnfuses` - this only needs to be done once
+4. `make upload`
+
+#### Setting up Arduino as ISP
+1. Plug Arduino into the USB port, which should show up as `/dev/ttyACM0`
+2. From the Arduino IDE, upload the *Arduino as ISP* sketch
+3. Unplug, then connect the following pins to your target ATtiny8x:
 
    Arduino | ATtiny85 | ATtiny84
    ------- | -------- | --------
@@ -102,22 +108,20 @@ Target              | Purpose
    Pin 10  | PB5      | PB3
 
    ```
-       ATtiny85 pins            ATtiny84 pins
-          _______                  _______
-    PB5 -|  \_/  |- VCC      VCC -|  \_/  |- GND
-    PB3 -|       |- PB2      PB0 -|       |- PA0
-    PB4 -|       |- PB1      PB1 -|       |- PA1
-    GND -|_______|- PB0      PB3 -|       |- PA2
-                             PB2 -|       |- PA3
-                             PA7 -|       |- PA4
-                             PA6 -|_______|- PA5
+      ATtiny85 pins            ATtiny84 pins
+          _______                 _______
+    PB5 -|  \_/  |- VCC     VCC -|  \_/  |- GND
+    PB3 -|       |- PB2     PB0 -|       |- PA0
+    PB4 -|       |- PB1     PB1 -|       |- PA1
+    GND -|_______|- PB0     PB3 -|       |- PA2
+                            PB2 -|       |- PA3
+                            PA7 -|       |- PA4
+                            PA6 -|_______|- PA5
    ```
 
    (No, I did not mess up the pins :P Check the datasheets)
 
 4. Add a 10uF capacitor between GND and RESET on the Arduino
-5. `make burnfuses`
-6. `make upload`
 
 ## Using `.vscode/tasks.json`
 //TODO
