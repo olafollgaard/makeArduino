@@ -7,6 +7,8 @@ As the makefile got more complex, it led to make it **re-usable** via `include`,
 
 This makefile is the result, and I have used it for a couple of Arduino projects, some on **Adafruit Pro Trinket 5V** boards, others on **ATtiny85** chips.
 
+This project is licensed under the terms of the MIT license.
+
 ## Assumptions
 The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including makeArduino.mk.
 
