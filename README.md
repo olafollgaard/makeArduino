@@ -5,7 +5,7 @@ I decided on **Visual Studio Code** with an **old-school makefile** for building
 
 As the makefile got more complex, it led to make it **re-usable** via `include`, so that each individual project only needed a minimal makefile. Consequently, it must be **project-agnostic**. Most configuration variables can be initialized with project-specific content before the `include` statement.
 
-This makefile is the result, and I have used it for a couple of Arduino projects, some on a **Adafruit Trinket Pro 5V board**, others on **ATtiny85** chips.
+This makefile is the result, and I have used it for a couple of Arduino projects, some on **Adafruit Pro Trinket 5V** boards, others on **ATtiny85** chips.
 
 ## Assumptions
 The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including makeArduino.mk.
@@ -94,7 +94,7 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
 
 ### `TARGET_SYSTEM` = `pro_trinket_5v`
 1. Plug trinket into the USB port
-2. Press reset button on the board (I have not found out how to auto-reset)
+2. Press reset button on the trinket (I have not figured out how to auto-reset)
 3. `make upload`
 
 ### `TARGET_SYSTEM` = `tiny_84` or `tiny_85`
@@ -131,7 +131,7 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
                             PA6 -|_______|- PA5
    ```
 
-   (No, I did not mess up the pins :P Check the datasheets)
+   (No, I did not mess up the pin locations :P Check the datasheets)
 
 ## Using `.vscode/tasks.json`
 //TODO
