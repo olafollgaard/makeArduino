@@ -134,7 +134,9 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
    (No, I did not mess up the pin locations :P Check the datasheets)
 
 ## Using `.vscode/tasks.json`
-//TODO
+This is the configuration that adds `Build`, `Full build` and `Upload` as tasks in VSCode. Use it as is, or tweak as you please.
+
+The `problemMatcher` entries let VSCode know when an error or warning occurs, and enables the integrated `Problems` list to open the relevant file and line number directly from the list, without having to find it yourself in the explorer.
 
 ## Using `.vscode/c_cpp_properties.json`
 //TODO
