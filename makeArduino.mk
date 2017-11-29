@@ -76,17 +76,19 @@ else
 F_CPU ?= 8000000
 endif
 
+# UPLOAD_PORT : Port to use
 # UPLOAD_PROGRAMMER : Programmer type for uploader
 # UPLOAD_PORT_CONFIG : Port configuration for the uploader
+UPLOAD_PORT ?= /dev/ttyACM0
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 UPLOAD_PROGRAMMER = usbtiny
 UPLOAD_PORT_CONFIG =
 else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 UPLOAD_PROGRAMMER ?= stk500v1
-UPLOAD_PORT_CONFIG ?= -b 19200 -P /dev/ttyACM0
+UPLOAD_PORT_CONFIG ?= -b 19200 -P $(UPLOAD_PORT)
 else
 UPLOAD_PROGRAMMER ?= arduino
-UPLOAD_PORT_CONFIG ?= -b 115200 -P /dev/ttyACM0
+UPLOAD_PORT_CONFIG ?= -b 115200 -P $(UPLOAD_PORT)
 endif
 
 # FUSES_CONFIG : Fuses to "burn"
