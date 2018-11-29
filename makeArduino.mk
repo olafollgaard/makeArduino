@@ -276,6 +276,7 @@ $(includepaths_json):
 	$(foreach path,$(include_flags),$(file >> $@,	"$(path:-I%=%)",))
 	$(file >> $@,	".")
 	$(file >> $@,])
+	perl -pi -e 's!^[\t ]+"\K/home/[^/"]+!~!' $@
 
 ifeq (.ino,$(suffix $(PROJECT_NAME)))
 # Generate project .cpp from .ino
