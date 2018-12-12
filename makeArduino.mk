@@ -45,6 +45,10 @@ endif
 #	and added to the include path
 INCLUDE_LIBS ?=
 
+# PROJECT_DEFINES : Additional project-wide defines
+#   e.g. PROJECT_DEFINES = MY_DEFINE_1 MY_DEFINE_2
+PROJECT_DEFINES ?=
+
 # ARDUINO_IDE_PATH : Path to arduino folder
 ARDUINO_IDE_PATH ?= /home/$(USER)/arduino-1.8.1
 # ARDUINO_TOOLS_PATH : Path to arduino build tools
@@ -153,7 +157,7 @@ mcu = attiny85
 endif
 
 # Defines
-defines := -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR
+defines := -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR $(foreach def,$(PROJECT_DEFINES),$(patsubst %,-D%,$(def)))
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 defines += -DARDUINO_AVR_PROTRINKET5
 else ifeq ($(TARGET_SYSTEM),uno)
