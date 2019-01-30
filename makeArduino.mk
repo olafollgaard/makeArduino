@@ -163,7 +163,7 @@ mcu = attiny85
 endif
 
 # Defines
-defines := -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR $(foreach def,$(PROJECT_DEFINES),$(patsubst %,-D%,$(def)))
+defines := -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR $(foreach def,$(PROJECT_DEFINES),$(patsubst %,-D%,$(def)))
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 defines += -DARDUINO_AVR_PROTRINKET5
 else ifneq (,$(filter $(TARGET_SYSTEM),uno raw328))
@@ -183,7 +183,7 @@ else
 objs_o :=
 endif
 obj_paths :=
-includepaths_json := $(out_path)/includepaths.json
+c_cpp_properties_json := $(out_path)/c_cpp_properties.json
 
 # Core and libraries
 include_flags := -I.
@@ -219,7 +219,7 @@ $(foreach path,$(LIBRARY_PATHS),$(eval \
 ))
 
 # Flags
-c_common_flags = -g -Os -w -Wall $(defines) $(include_flags) \
+c_common_flags = -g -Os -w -Wall -mmcu=$(mcu) $(defines) $(include_flags) \
 	-ffunction-sections -fdata-sections -flto -fno-fat-lto-objects
 CFLAGS = $(c_common_flags)
 CXXFLAGS = $(c_common_flags) -fno-exceptions
@@ -276,16 +276,46 @@ $(project_hex): $(project_elf)
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Link to elf
-$(project_elf): $(includepaths_json) $(objs_o)
+$(project_elf): $(c_cpp_properties_json) $(objs_o)
 	$(info # Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $(objs_o)
 
-# Generate includepaths json for use in c_cpp_properties.json
-$(includepaths_json):
-	$(file > $@,[)
-	$(foreach path,$(include_flags),$(file >> $@,	"$(path:-I%=%)",))
-	$(file >> $@,	".")
-	$(file >> $@,])
+# Generate c_cpp_properties.json
+$(c_cpp_properties_json):
+	$(file > $@,{)
+	$(file >> $@,  "configurations": [)
+	$(file >> $@,    {)
+	$(file >> $@,      "name": "Linux",)
+	$(file >> $@,      "defines": [)
+	$(foreach def,$(defines),$(file >> $@,        "$(def:-D%=%)",))
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85 raw84 raw85))
+	$(file >> $@,        "__AVR_TINY__", "__AVR_TINY_PM_BASE_ADDRESS__=0",)
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 raw84))
+	$(file >> $@,        "__AVR_ATtiny84__", "__AVR_ATtinyX4__",)
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_85 raw85))
+	$(file >> $@,        "__AVR_ATtiny85__", "__AVR_ATtinyX5__",)
+endif
+endif
+	$(file >> $@,        "__AVR_ARCH__")
+	$(file >> $@,      ],)
+	$(file >> $@,      "includePath": [)
+	$(foreach path,$(include_flags),$(file >> $@,        "$(path:-I%=%)",))
+	$(file >> $@,        "$(ARDUINO_TOOLS_PATH:%/bin=%)/avr/include")
+	$(file >> $@,      ],)
+	$(file >> $@,      "browse": {)
+	$(file >> $@,        "limitSymbolsToIncludedHeaders": true,)
+	$(file >> $@,        "databaseFilename": "",)
+	$(file >> $@,        "path": [)
+	$(foreach path,$(include_flags),$(file >> $@,          "$(path:-I%=%)",))
+	$(file >> $@,          "$(ARDUINO_TOOLS_PATH:%/bin=%)/avr/include",)
+	$(file >> $@,          "$${workspaceRoot}")
+	$(file >> $@,        ])
+	$(file >> $@,      },)
+	$(file >> $@,      "intelliSenseMode": "clang-x64")
+	$(file >> $@,    })
+	$(file >> $@,  ],)
+	$(file >> $@,  "version": 4)
+	$(file >> $@,})
 	perl -pi -e 's!^[\t ]+"\K/home/[^/"]+!~!' $@
 
 ifeq (.ino,$(suffix $(PROJECT_NAME)))
