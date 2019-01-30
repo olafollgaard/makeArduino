@@ -18,6 +18,7 @@
 # Core libraries used:
 # uno, pro_trinket_5v: Core from Arudino IDE 1.8.1
 # tiny_84, tiny_85: https://code.google.com/archive/p/arduino-tiny/
+# raw84, raw85: rawcore
 
 #--------------------------------------------------
 # Configuration variables and their default values
@@ -29,10 +30,10 @@ ifndef PROJECT_NAME
 $(error !!!!! PROJECT_NAME must be defined)
 endif
 
-# TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85
+# TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85 | raw84 | raw85 | raw328
 ifndef TARGET_SYSTEM
 $(error !!!!! TARGET_SYSTEM must be defined)
-else ifeq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v tiny_84 tiny_85))
+else ifeq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v tiny_84 tiny_85 raw84 raw85 raw328))
 $(error !!!!! Unrecognized TARGET_SYSTEM $(TARGET_SYSTEM))
 endif
 
@@ -62,6 +63,8 @@ PROJECTS_ROOT_PATH ?= /home/$(USER)/Arduino
 # ARDUINO_CORE_PATH: Path to arduino core
 ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/tiny/avr/cores/tiny
+else ifneq (,$(filter $(TARGET_SYSTEM),raw84 raw85 raw328))
+ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/rawcore
 else
 ARDUINO_CORE_PATH ?= $(ARDUINO_AVR_PATH)/cores/arduino
 endif
@@ -87,7 +90,7 @@ UPLOAD_PORT ?= /dev/ttyACM0
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 UPLOAD_PROGRAMMER = usbtiny
 UPLOAD_PORT_CONFIG =
-else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85 raw84 raw85 raw328))
 UPLOAD_PROGRAMMER ?= stk500v1
 UPLOAD_PORT_CONFIG ?= -b 19200 -P $(UPLOAD_PORT)
 else
@@ -96,8 +99,11 @@ UPLOAD_PORT_CONFIG ?= -b 115200 -P $(UPLOAD_PORT)
 endif
 
 # FUSES_CONFIG : Fuses to "burn"
-ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
+ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85 raw84 raw85))
 FUSES_CONFIG ?= -U efuse:w:0xff:m -U hfuse:w:0xdf:m -U lfuse:w:0xe2:m
+endif
+ifneq (,$(filter $(TARGET_SYSTEM),raw328))
+FUSES_CONFIG ?= -U efuse:w:0xff:m -U hfuse:w:0xd9:m -U lfuse:w:0xe2:m
 endif
 
 # End of configuration section
@@ -148,11 +154,11 @@ endef
 #---------------------------------------------
 # Translate configuration into compiler flags
 
-ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v))
+ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v raw328))
 mcu = atmega328p
-else ifeq ($(TARGET_SYSTEM),tiny_84)
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 raw84))
 mcu = attiny84
-else ifeq ($(TARGET_SYSTEM),tiny_85)
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_85 raw85))
 mcu = attiny85
 endif
 
@@ -160,9 +166,9 @@ endif
 defines := -mmcu=$(mcu) -DF_CPU=$(F_CPU) -DARDUINO=10801 -DARDUINO_ARCH_AVR $(foreach def,$(PROJECT_DEFINES),$(patsubst %,-D%,$(def)))
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 defines += -DARDUINO_AVR_PROTRINKET5
-else ifeq ($(TARGET_SYSTEM),uno)
+else ifneq (,$(filter $(TARGET_SYSTEM),uno raw328))
 defines += -DARDUINO_AVR_UNO
-else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85 raw84 raw85))
 defines += -DARDUINO_attiny
 endif
 
