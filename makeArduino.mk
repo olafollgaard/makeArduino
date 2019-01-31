@@ -235,7 +235,7 @@ avrdude_flags = -p $(mcu) -C /etc/avrdude.conf -c $(UPLOAD_PROGRAMMER) $(UPLOAD_
 #-------------------
 # Targets and rules
 
-.PHONY: all burnfuses build fullbuild mostlyclean realclean clean compile nm dumpS upload
+.PHONY: all burnfuses build fullbuild mostlyclean realclean clean update_c_cpp_properties compile nm dumpS upload
 
 all: build upload
 
@@ -248,6 +248,9 @@ mostlyclean:
 
 realclean clean:
 	rm -rfd $(out_path)
+
+update_c_cpp_properties: $(c_cpp_properties_json)
+	cp $(c_cpp_properties_json) .vscode/c_cpp_properties.json
 
 compile: $(out_path) $(obj_paths) $(c_cpp_properties_json) $(project_hex)
 	$(info # Read elf stats)
