@@ -249,9 +249,10 @@ mostlyclean:
 realclean clean:
 	rm -rfd $(out_path)
 
-compile: $(out_path) $(obj_paths) $(project_hex)
+compile: $(out_path) $(obj_paths) $(c_cpp_properties_json) $(project_hex)
 	$(info # Read elf stats)
 	readelf -S $(project_elf) | perl -ne 's/\.\w+\s+\K(?:\w+\s+){3}(\w+)\s+\w+\s+[B-Z]*A[B-Z]*(?:\s+\d+){3}\s*$$/: $$1\n/ and print'
+	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_properties_json)
 
 nm:
 	avr-nm --size-sort -r -C -S $(project_elf)
@@ -276,7 +277,7 @@ $(project_hex): $(project_elf)
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Link to elf
-$(project_elf): $(c_cpp_properties_json) $(objs_o)
+$(project_elf): $(objs_o)
 	$(info # Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $(objs_o)
 
@@ -317,6 +318,7 @@ endif
 	$(file >> $@,  "version": 4)
 	$(file >> $@,})
 	perl -pi -e 's!^[\t ]+"\K/home/[^/"]+!~!' $@
+	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_properties_json)
 
 ifeq (.ino,$(suffix $(PROJECT_NAME)))
 # Generate project .cpp from .ino
