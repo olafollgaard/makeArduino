@@ -3,14 +3,14 @@ As a software developer in my daily life, I was immediately annoyed by the Ardui
 
 I decided on **Visual Studio Code** with an **old-school makefile** for building and uploading to the MCU. At work I am a Windows developer, but at home I use **Ubuntu**, and I have no plans of using this makefile on Windows, though it probably wouldn't be hard to do.
 
-As the makefile got more complex, it led to make it **re-usable** via `include`, so that each individual project only needed a minimal makefile. Consequently, it must be **project-agnostic**. Most configuration variables can be initialized with project-specific content before the `include` statement.
+As the makefile got more complex, it led to make it re-usable via `include`, so that each individual project only needed a minimal makefile. Consequently, it must be **project-agnostic**. Most configuration variables can be initialized with project-specific content before the `include` statement.
 
-This makefile is the result, and I have used it for a couple of Arduino projects, some on **Adafruit Pro Trinket 5V** boards, others on **ATtiny85** chips.
+This makefile is the result, and I have used it for a couple of Arduino projects, some on **Adafruit Pro Trinket 5V** boards, others on **ATtiny85/84** chips.
 
 This project is licensed under the terms of the MIT license.
 
 ## Assumptions
-The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including makeArduino.mk.
+The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including `makeArduino.mk`.
 
 For Atmel ATtiny8x chips, `ARDUINO_CORE_PATH` points to the [arduino-tiny](https://code.google.com/archive/p/arduino-tiny/) package, located in `~/Arduino/libraries/tiny`.
 
@@ -20,7 +20,7 @@ Config variable      | Default            | Usage
 `PROJECTS_ROOT_PATH` | `~/Arduino/`       | Personal projects
 `LIBRARY_PATHS`      | `~/Arduino/my_libraries` `~/Arduino/libraries` | Home-grown and third-party libraries
 
-There are other nitty-gritty config variables in makeArduino.mk, but these are the most important ones.
+There are other nitty-gritty config variables in `makeArduino.mk`, but these are the most important ones.
 
 Other assumptions may be "hidden", or in plain english: It works on my setup :)
 
@@ -38,6 +38,7 @@ PROJECT_NAME = Sample
 # TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85
 TARGET_SYSTEM = uno
 INCLUDE_LIBS =
+PROJECT_DEFINES =
 
 include ../makeArduino/makeArduino.mk
 ```
@@ -55,7 +56,7 @@ include ../makeArduino/makeArduino.mk
   `tiny_84`        | Atmel ATtiny84 microcontroller
   `tiny_85`        | Atmel ATtiny85 microcontroller
 
-* `INCLUDE_LIBS` is the most advanced variable in terms of implementing makeArduino.mk, but it is very easy to use, provided that your library folders are located in one of the folders in `LIBRARY_PATHS`, and also, of course, that my "hidden assumptions" are correct :)
+* `INCLUDE_LIBS` is the most advanced variable in terms of implementing `makeArduino.mk`, but it is very easy to use, provided that your library folders are located in one of the folders in `LIBRARY_PATHS`, and also, of course, that my "hidden assumptions" are correct :)
 
   It is just a space-separated list of names of the libraries you wish to include in your project.
 
@@ -68,7 +69,15 @@ include ../makeArduino/makeArduino.mk
 
   All subfolders that contain `.h`, `.c`, `.cpp` or `.S` files are recursed into and added to the include path.
 
-## Targets in makeArduino.mk
+* `PROJECT_DEFINES`: Here you can put whatever global defines you want to have in your project. The defines are of course added to the compiler options, but they are also included in `.mkout/c_cpp_properties.json`, which can be copied into `.vscode/` to let VSCode IntelliSense know how to resolve symbols.
+
+  I use [SoftI2CMaster.h](https://github.com/felias-fogg/SoftI2CMaster) on ATtinyXX projects, and need to add something like this:
+
+  ```
+  PROJECT_DEFINES = SDA_PORT=PORTA SDA_PIN=PA6 SCL_PORT=PORTA SCL_PIN=PA4
+  ```
+
+## Targets in `makeArduino.mk`
 The typical `make` targets are `build` and `upload`, but here is a short description of all the main targets:
 
 Target              | Purpose
@@ -78,6 +87,7 @@ Target              | Purpose
 `fullbuild`         | Rebuild everything, both project and libraries
 `mostlyclean`       | Remove project binaries, but not libraries
 `realclean`/`clean` | Remove all binaries
+`vscodejson`        | Update .vscode/c_cpp_properties.json with paths and defines. Actually, 'update' is a bit of a misnomer: It is replaced, so any manual changes will be lost.
 `compile`           | Compile only changed files
 `nm`                | List what uses the sometimes precious space
 `dumpS`             | Dump dissasembly
@@ -102,7 +112,7 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
 ### `TARGET_SYSTEM` = `tiny_84` or `tiny_85`
 1. Set up Arduino as ISP, as detailed below
 2. Plug Arduino ISP into the USB port, which should show up as `/dev/ttyACM0`
-3. `make burnfuses` - this only needs to be done once
+3. `make burnfuses` - this only needs to be done once for each chip
 4. `make upload`
 
 #### Setting up Arduino as ISP
@@ -141,4 +151,6 @@ This is the configuration that adds `Build`, `Full build` and `Upload` as tasks 
 The `problemMatcher` entries let VSCode know when an error or warning occurs, and enables the integrated `Problems` list to open the relevant file and line number directly from the list, without having to find it yourself in the explorer.
 
 ## Using `.vscode/c_cpp_properties.json`
-//TODO
+Whenever the `compile` target is run, a `c_cpp_properties.json` file with the included paths and defines is generated in `.mkout`. This can be copied into `.vscode/` manually or by runnig `make vscodejson`, so that IntelliSense can resolve symbols.
+
+When the fresh version is different from the one in `.vscode/`, a short `diff` is shown after `compile`. Make will say that an error occurred and was ignored, because `diff` returns nonzero when differences were found.
