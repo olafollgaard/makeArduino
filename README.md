@@ -69,7 +69,7 @@ include ../makeArduino/makeArduino.mk
 
   All subfolders that contain `.h`, `.c`, `.cpp` or `.S` files are recursed into and added to the include path.
 
-* `PROJECT_DEFINES`: Here you can put whatever global defines you want to have in your project. The defines are of course added to the compiler options, but they are also included in `.mkout/c_cpp_properties.json`, which can be copied into `.vscode/` to let VSCode IntelliSense know how to resolve symbols.
+* `PROJECT_DEFINES`: Here you can put whatever global defines you want to have in your project. The defines are of course added to the compiler options, but they are also included in `.mkout/c_cpp_properties.json`, which can be copied into `.vscode/` (manually or via `make updatevscodecpp`) to let VSCode IntelliSense know how to resolve symbols.
 
   I use [SoftI2CMaster.h](https://github.com/felias-fogg/SoftI2CMaster) on ATtinyXX projects, and need to add something like this:
 
@@ -87,7 +87,8 @@ Target              | Purpose
 `fullbuild`         | Rebuild everything, both project and libraries
 `mostlyclean`       | Remove project binaries, but not libraries
 `realclean`/`clean` | Remove all binaries
-`vscodejson`        | Update .vscode/c_cpp_properties.json with paths and defines. Actually, 'update' is a bit of a misnomer: It is replaced, so any manual changes will be lost.
+`updatevscodecpp`   | Update `.vscode/c_cpp_properties.json` with paths and defines. Actually, 'update' is a bit of a misnomer: It is replaced, so any manual changes in `.vscode/c_cpp_properties.json` will be lost.
+`updatevscodetasks` | Replace `.vscode/tasks.json` with one containing tasks for 'Build', 'Upload' and 'Update .vscode/c_cpp_properties.json'. As with `updatevscodecpp`, manual changes in `.vscode/tasks.json` will be lost.
 `compile`           | Compile only changed files
 `nm`                | List what uses the sometimes precious space
 `dumpS`             | Dump dissasembly
@@ -146,11 +147,15 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
    (No, I did not mess up the pin locations :P Check the datasheets)
 
 ## Using `.vscode/tasks.json`
-This is the configuration that adds `Build`, `Full build` and `Upload` as tasks in VSCode. Use it as is, or tweak as you please.
+This is the configuration that adds `Build`, `Upload` and `Update .vscode/c_cpp_properties.json` as tasks in VSCode.
+
+Whenever the `compile` target is run, a `tasks.json` file is generated in `.mkout`. This can be copied into `.vscode/` manually or by running `make updatevscodetasks`.
+
+When the fresh version is different from the one in `.vscode/`, a short `diff` is shown after `compile`. Make will say that an error occurred and was ignored, because `diff` returns nonzero when differences were found.
 
 The `problemMatcher` entries let VSCode know when an error or warning occurs, and enables the integrated `Problems` list to open the relevant file and line number directly from the list, without having to find it yourself in the explorer.
 
 ## Using `.vscode/c_cpp_properties.json`
-Whenever the `compile` target is run, a `c_cpp_properties.json` file with the included paths and defines is generated in `.mkout`. This can be copied into `.vscode/` manually or by runnig `make vscodejson`, so that IntelliSense can resolve symbols.
+Whenever the `compile` target is run, a `c_cpp_properties.json` file with the included paths and defines is generated in `.mkout`. This can be copied into `.vscode/` manually or by running `make updatevscodecpp`, so that IntelliSense can resolve symbols.
 
 When the fresh version is different from the one in `.vscode/`, a short `diff` is shown after `compile`. Make will say that an error occurred and was ignored, because `diff` returns nonzero when differences were found.

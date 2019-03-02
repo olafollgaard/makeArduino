@@ -1,4 +1,4 @@
 .mkout/
-.vscode/c_cpp_properties.json
+.vscode/
 test.mk
 *.txt

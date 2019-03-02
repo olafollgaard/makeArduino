@@ -183,7 +183,8 @@ else
 objs_o :=
 endif
 obj_paths :=
-c_cpp_properties_json := $(out_path)/c_cpp_properties.json
+tasks_json := $(out_path)/tasks.json
+c_cpp_json := $(out_path)/c_cpp_properties.json
 
 # Core and libraries
 include_flags := -I.
@@ -235,7 +236,7 @@ avrdude_flags = -p $(mcu) -C /etc/avrdude.conf -c $(UPLOAD_PROGRAMMER) $(UPLOAD_
 #-------------------
 # Targets and rules
 
-.PHONY: all burnfuses build fullbuild mostlyclean realclean clean vscodejson compile nm dumpS upload
+.PHONY: all burnfuses build fullbuild mostlyclean realclean clean updatevscodecpp updatevscodetasks compile nm dumpS upload
 
 all: build upload
 
@@ -249,13 +250,17 @@ mostlyclean:
 realclean clean:
 	rm -rfd $(out_path)
 
-vscodejson: $(c_cpp_properties_json)
-	cp $(c_cpp_properties_json) .vscode/c_cpp_properties.json
+updatevscodecpp: $(c_cpp_json)
+	cp $(c_cpp_json) .vscode/c_cpp_properties.json
 
-compile: $(out_path) $(obj_paths) $(c_cpp_properties_json) $(project_hex)
+updatevscodetasks: $(tasks_json)
+	cp $(tasks_json) .vscode/tasks.json
+
+compile: $(out_path) $(obj_paths) $(tasks_json) $(c_cpp_json) $(project_hex)
 	$(info # Read elf stats)
 	readelf -S $(project_elf) | perl -ne 's/\.\w+\s+\K(?:\w+\s+){3}(\w+)\s+\w+\s+[B-Z]*A[B-Z]*(?:\s+\d+){3}\s*$$/: $$1\n/ and print'
-	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_properties_json)
+	@-diff -U 0 --color .vscode/tasks.json $(tasks_json)
+	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_json)
 
 nm:
 	avr-nm --size-sort -r -C -S $(project_elf)
@@ -284,8 +289,71 @@ $(project_elf): $(objs_o)
 	$(info # Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $(objs_o)
 
+# Generate tasks.json
+$(tasks_json):
+	$(file > $@,{)
+	$(file >> $@,	// See https://go.microsoft.com/fwlink/?LinkId=733558)
+	$(file >> $@,	// for the documentation about the tasks.json format)
+	$(file >> $@,	"version": "2.0.0",)
+	$(file >> $@,	"tasks": [)
+	$(file >> $@,		{)
+	$(file >> $@,			"label": "Build $(PROJECT_NAME)",)
+	$(file >> $@,			"command": "make",)
+	$(file >> $@,			"args": [)
+	$(file >> $@,				"fullbuild")
+	$(file >> $@,			],)
+	$(file >> $@,			"group": {)
+	$(file >> $@,				"kind": "build",)
+	$(file >> $@,				"isDefault": true)
+	$(file >> $@,			},)
+	$(file >> $@,			"presentation": {)
+	$(file >> $@,				"echo": true,)
+	$(file >> $@,				"reveal": "always",)
+	$(file >> $@,				"focus": false,)
+	$(file >> $@,				"panel": "shared",)
+	$(file >> $@,				"showReuseMessage": true,)
+	$(file >> $@,				"clear": true)
+	$(file >> $@,			},)
+	$(file >> $@,			"problemMatcher": "$$gcc")
+	$(file >> $@,		},)
+	$(file >> $@,		{)
+	$(file >> $@,			"label": "Upload $(PROJECT_NAME)",)
+	$(file >> $@,			"command": "make",)
+	$(file >> $@,			"args": [)
+	$(file >> $@,				"upload")
+	$(file >> $@,			],)
+	$(file >> $@,			"presentation": {)
+	$(file >> $@,				"echo": true,)
+	$(file >> $@,				"reveal": "always",)
+	$(file >> $@,				"focus": false,)
+	$(file >> $@,				"panel": "shared",)
+	$(file >> $@,				"showReuseMessage": true,)
+	$(file >> $@,				"clear": true)
+	$(file >> $@,			},)
+	$(file >> $@,			"problemMatcher":"$$gcc")
+	$(file >> $@,		},)
+	$(file >> $@,		{)
+	$(file >> $@,			"label": "Update .vscode/c_cpp_properties.json",)
+	$(file >> $@,			"command": "make",)
+	$(file >> $@,			"args": [)
+	$(file >> $@,				"updatevscodecpp")
+	$(file >> $@,			],)
+	$(file >> $@,			"presentation": {)
+	$(file >> $@,				"echo": true,)
+	$(file >> $@,				"reveal": "always",)
+	$(file >> $@,				"focus": false,)
+	$(file >> $@,				"panel": "shared",)
+	$(file >> $@,				"showReuseMessage": true,)
+	$(file >> $@,				"clear": true)
+	$(file >> $@,			},)
+	$(file >> $@,			"problemMatcher":"$$gcc")
+	$(file >> $@,		})
+	$(file >> $@,	])
+	$(file >> $@,})
+	@-diff -U 0 --color .vscode/tasks.json $(tasks_json)
+
 # Generate c_cpp_properties.json
-$(c_cpp_properties_json):
+$(c_cpp_json):
 	$(file > $@,{)
 	$(file >> $@,  "configurations": [)
 	$(file >> $@,    {)
@@ -321,7 +389,7 @@ endif
 	$(file >> $@,  "version": 4)
 	$(file >> $@,})
 	perl -pi -e 's!^[\t ]+"\K/home/[^/"]+!~!' $@
-	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_properties_json)
+	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_json)
 
 ifeq (.ino,$(suffix $(PROJECT_NAME)))
 # Generate project .cpp from .ino
