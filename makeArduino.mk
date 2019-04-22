@@ -231,7 +231,7 @@ else
 CFLAGS += -std=gnu11
 CXXFLAGS += -std=gnu++11
 endif
-avrdude_flags = -p $(mcu) -C /etc/avrdude.conf -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG)
+avrdude_flags = -p $(mcu) -C $(ARDUINO_TOOLS_PATH)/etc/avrdude.conf -c $(UPLOAD_PROGRAMMER) $(UPLOAD_PORT_CONFIG)
 
 #-------------------
 # Targets and rules
