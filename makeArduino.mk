@@ -53,7 +53,7 @@ PROJECT_DEFINES ?=
 # ARDUINO_IDE_PATH : Path to arduino folder
 ARDUINO_IDE_PATH ?= /home/$(USER)/arduino-1.8.1
 # ARDUINO_TOOLS_PATH : Path to arduino build tools
-ARDUINO_TOOLS_PATH ?= $(ARDUINO_IDE_PATH)/hardware/tools/avr/bin
+ARDUINO_TOOLS_PATH ?= $(ARDUINO_IDE_PATH)/hardware/tools/avr
 # ARDUINO_AVR_PATH : Path to "hardware/arduino/avr" folder
 ARDUINO_AVR_PATH ?= $(ARDUINO_IDE_PATH)/hardware/arduino/avr
 # PACKAGES_PATH : Path to packages folder
@@ -112,10 +112,10 @@ endif
 #---------------------
 # Compilers and tools
 
-CC = $(ARDUINO_TOOLS_PATH)/avr-gcc
-CXX = $(ARDUINO_TOOLS_PATH)/avr-g++
-AVR_OBJCOPY = $(ARDUINO_TOOLS_PATH)/avr-objcopy
-AVRDUDE = $(ARDUINO_TOOLS_PATH)/avrdude
+CC = $(ARDUINO_TOOLS_PATH)/bin/avr-gcc
+CXX = $(ARDUINO_TOOLS_PATH)/bin/avr-g++
+AVR_OBJCOPY = $(ARDUINO_TOOLS_PATH)/bin/avr-objcopy
+AVRDUDE = $(ARDUINO_TOOLS_PATH)/bin/avrdude
 
 #----------------------------------------------------------
 # Utility method for handling libraries and any subfolders
@@ -372,14 +372,14 @@ endif
 	$(file >> $@,      ],)
 	$(file >> $@,      "includePath": [)
 	$(foreach path,$(include_flags),$(file >> $@,        "$(path:-I%=%)",))
-	$(file >> $@,        "$(ARDUINO_TOOLS_PATH:%/bin=%)/avr/include")
+	$(file >> $@,        "$(ARDUINO_TOOLS_PATH)/avr/include")
 	$(file >> $@,      ],)
 	$(file >> $@,      "browse": {)
 	$(file >> $@,        "limitSymbolsToIncludedHeaders": true,)
 	$(file >> $@,        "databaseFilename": "",)
 	$(file >> $@,        "path": [)
 	$(foreach path,$(include_flags),$(file >> $@,          "$(path:-I%=%)",))
-	$(file >> $@,          "$(ARDUINO_TOOLS_PATH:%/bin=%)/avr/include",)
+	$(file >> $@,          "$(ARDUINO_TOOLS_PATH)/avr/include",)
 	$(file >> $@,          "$${workspaceRoot}")
 	$(file >> $@,        ])
 	$(file >> $@,      },)
