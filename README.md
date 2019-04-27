@@ -45,8 +45,6 @@ include ../makeArduino/makeArduino.mk
 
 * `PROJECT_NAME` is used as name part of `.elf` and `.hex` filenames, and so must be usable as such; don't use characters like `"`, `:` or `/`.
 
-  It can also be the filename (excl path, incl suffix) of an `.ino` sketch file, which should be placed in the same directory as your `Makefile`. It works, but **I do not reccommend using an .ino file**, since I made some `problemMatcher`s in `.vscode/tasks.json` to get integrated compile error messages and locations in VSCode, and they produce confusing file names and locations for compile errors in `.ino` files.
-
 * `TARGET_SYSTEM` specifies which hardware the project is aimed at:
 
   Value            | Hardware

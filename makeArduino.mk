@@ -11,7 +11,7 @@
 # |include ../makeArduino/makeArduino.mk
 # +--------------------------------------
 # All local .cpp files are compiled as well as the libraries specified in
-# INCLUDE_LIBS. If PROJECT_NAME is an .ino filename, this is compiled too
+# INCLUDE_LIBS
 #
 # Make targets: all build fullbuild mostlyclean realclean clean compile upload
 #
@@ -24,8 +24,6 @@
 # Configuration variables and their default values
 
 # PROJECT_NAME : Project name, used as name part of .elf and .hex filenames
-# It can also be the filename (excl path, incl suffix) of an .ino sketch
-# file, which should be placed in the same directory as the makefile
 ifndef PROJECT_NAME
 $(error !!!!! PROJECT_NAME must be defined)
 endif
@@ -176,12 +174,7 @@ endif
 out_path := .mkout
 project_elf := $(out_path)/$(PROJECT_NAME).elf
 project_hex := $(out_path)/$(PROJECT_NAME).hex
-ifeq (.ino,$(suffix $(PROJECT_NAME)))
-project_cpp := $(out_path)/$(PROJECT_NAME).cpp
-objs_o := $(out_path)/$(PROJECT_NAME).cpp.o
-else
 objs_o :=
-endif
 obj_paths :=
 vscode_path := .vscode
 tasks_json_fname := tasks.json
@@ -410,22 +403,6 @@ endif
 	$(file >> $@,  "version": 4)
 	$(file >> $@,})
 	perl -pi -e 's!^[\t ]+"\K/home/[^/"]+!~!' $@
-
-ifeq (.ino,$(suffix $(PROJECT_NAME)))
-# Generate project .cpp from .ino
-$(project_cpp): $(PROJECT_NAME)
-	$(info # Generate $@)
-ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
-	@echo '#include "WProgram.h"'>$@
-else
-	@echo '#include "Arduino.h"'>$@
-endif
-	@cat $< >> $@
-# Compile project .cpp file
-$(out_path)/%.cpp.o:: $(out_path)/%.cpp
-	$(info # Compile $<)
-	$(CXX) -c $(CXXFLAGS) $< -o $@
-endif
 
 # Compile .c, .cpp and .S files
 define define_folder_rules =
