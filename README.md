@@ -87,8 +87,12 @@ Target              | Purpose
 `fullbuild`         | Rebuild everything, both project and libraries
 `mostlyclean`       | Remove project binaries, but not libraries
 `realclean`/`clean` | Remove all binaries
-`updatevscodecpp`   | Update `.vscode/c_cpp_properties.json` with paths and defines. Actually, 'update' is a bit of a misnomer: It is replaced, so any manual changes in `.vscode/c_cpp_properties.json` will be lost.
-`updatevscodetasks` | Replace `.vscode/tasks.json` with one containing tasks for 'Build', 'Upload' and 'Update .vscode/c_cpp_properties.json'. As with `updatevscodecpp`, manual changes in `.vscode/tasks.json` will be lost.
+`buildvscodecpp`    | Generate `c_cpp_properties.json` with paths and defines, then show changes, but do not apply to `.vscode`
+`updatevscodecpp`   | Generate and replace `.vscode/c_cpp_properties.json`. Manual changes in `.vscode/c_cpp_properties.json` will be lost.
+`buildvscodetasks`  | Generate `tasks.json` with tasks for 'Build', 'Upload' and 'Update .vscode/c_cpp_properties.json', then show changes, but do not apply to `.vscode`
+`updatevscodetasks` | Generate and replace `.vscode/tasks.json`. Manual changes in `.vscode/tasks.json` will be lost.
+`buildvscode`       | Generate both `c_cpp_properties.json` and `tasks.json` and show changes, but do not apply to `.vscode`
+`updatevscode`      | Generate and replace both `.vscode/c_cpp_properties.json` and `.vscode/tasks.json`. Manual changes in either will be lost.
 `compile`           | Compile only changed files
 `nm`                | List what uses the sometimes precious space
 `dumpS`             | Dump dissasembly
@@ -146,16 +150,16 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
 
    (No, I did not mess up the pin locations :P Check the datasheets)
 
-## Using `.vscode/tasks.json`
-This is the configuration that adds `Build`, `Upload` and `Update .vscode/c_cpp_properties.json` as tasks in VSCode.
+## Using `tasks.json` and `c_cpp_properties.json`
+* `tasks.json` is the configuration that adds `Build`, `Upload` and `Update .vscode/c_cpp_properties.json` as tasks in VSCode.
+* `c_cpp_properties.json` is the configuration that lets IntelliSense know how to resolve symbols via included paths and project defines.
 
-Whenever the `compile` target is run, a `tasks.json` file is generated in `.mkout`. This can be copied into `.vscode/` manually or by running `make updatevscodetasks`.
+Whenever the `compile` target is run, fresh `tasks.json` and `c_cpp_properties.json` file are generated in `.mkout`. If they is different from the ones in `.vscode`, a short `diff` is shown after `compile` is done. Make will say that an error occurred and was ignored, because `diff` returns nonzero when differences were found.
 
-When the fresh version is different from the one in `.vscode/`, a short `diff` is shown after `compile`. Make will say that an error occurred and was ignored, because `diff` returns nonzero when differences were found.
-
-The `problemMatcher` entries let VSCode know when an error or warning occurs, and enables the integrated `Problems` list to open the relevant file and line number directly from the list, without having to find it yourself in the explorer.
-
-## Using `.vscode/c_cpp_properties.json`
-Whenever the `compile` target is run, a `c_cpp_properties.json` file with the included paths and defines is generated in `.mkout`. This can be copied into `.vscode/` manually or by running `make updatevscodecpp`, so that IntelliSense can resolve symbols.
-
-When the fresh version is different from the one in `.vscode/`, a short `diff` is shown after `compile`. Make will say that an error occurred and was ignored, because `diff` returns nonzero when differences were found.
+To rebuild or update `tasks.json` and `c_cpp_properties.json` without compiling the project, e.g. in a fresh new one, run one of the following:
+* `make buildvscode` - Generate both files
+* `make updatevscode` - Generate and replace both files
+* `make buildvscodetasks` - Generate `tasks.json`
+* `make updatevscodetasks` - Generate and replace `tasks.json`
+* `make buildvscodecpp` - Generate `c_cpp_properties.json`
+* `make updatevscodecpp` - Generate and replace `c_cpp_properties.json`

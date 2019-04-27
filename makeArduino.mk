@@ -183,8 +183,13 @@ else
 objs_o :=
 endif
 obj_paths :=
-tasks_json := $(out_path)/tasks.json
-c_cpp_json := $(out_path)/c_cpp_properties.json
+vscode_path := .vscode
+tasks_json_fname := tasks.json
+tasks_json := $(out_path)/$(tasks_json_fname)
+tasks_json_vscode := $(vscode_path)/$(tasks_json_fname)
+c_cpp_json_fname := c_cpp_properties.json
+c_cpp_json := $(out_path)/$(c_cpp_json_fname)
+c_cpp_json_vscode := $(vscode_path)/$(c_cpp_json_fname)
 
 # Core and libraries
 include_flags := -I.
@@ -236,7 +241,11 @@ avrdude_flags = -p $(mcu) -C $(ARDUINO_TOOLS_PATH)/etc/avrdude.conf -c $(UPLOAD_
 #-------------------
 # Targets and rules
 
-.PHONY: all burnfuses build fullbuild mostlyclean realclean clean updatevscodecpp updatevscodetasks compile nm dumpS upload
+.PHONY: all burnfuses build fullbuild mostlyclean realclean clean compile upload \
+	buildvscode updatevscode \
+	buildvscodecpp updatevscodecpp \
+	buildvscodetasks updatevscodetasks \
+	nm dumpS
 
 all: build upload
 
@@ -250,23 +259,27 @@ mostlyclean:
 realclean clean:
 	rm -rfd $(out_path)
 
-updatevscodecpp: $(c_cpp_json)
-	cp $(c_cpp_json) .vscode/c_cpp_properties.json
+buildvscode: buildvscodecpp buildvscodetasks
 
-updatevscodetasks: $(tasks_json)
-	cp $(tasks_json) .vscode/tasks.json
+updatevscode: updatevscodecpp updatevscodetasks
 
-compile: $(out_path) $(obj_paths) $(tasks_json) $(c_cpp_json) $(project_hex)
+buildvscodecpp: $(c_cpp_json)
+	@-diff -U 0 --color $(c_cpp_json_vscode) $(c_cpp_json)
+
+updatevscodecpp: buildvscodecpp
+	cp $(c_cpp_json) $(c_cpp_json_vscode)
+
+buildvscodetasks: $(tasks_json)
+	@-diff -U 0 --color $(tasks_json_vscode) $(tasks_json)
+
+updatevscodetasks: buildvscodetasks
+	cp $(tasks_json) $(tasks_json_vscode)
+
+compile: $(out_path) $(obj_paths) $(vscode_path) $(tasks_json) $(c_cpp_json) $(project_hex)
 	$(info # Read elf stats)
 	readelf -S $(project_elf) | perl -ne 's/\.\w+\s+\K(?:\w+\s+){3}(\w+)\s+\w+\s+[B-Z]*A[B-Z]*(?:\s+\d+){3}\s*$$/: $$1\n/ and print'
-	@-diff -U 0 --color .vscode/tasks.json $(tasks_json)
-	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_json)
-
-nm:
-	avr-nm --size-sort -r -C -S $(project_elf)
-
-dumpS:
-	avr-objdump -S -C $(project_elf) |less
+	@-diff -U 0 --color $(tasks_json_vscode) $(tasks_json)
+	@-diff -U 0 --color $(c_cpp_json_vscode) $(c_cpp_json)
 
 burnfuses:
 	$(info # "Burn" $(TARGET_SYSTEM) fuses)
@@ -276,7 +289,16 @@ upload: compile
 	$(info # Upload to $(TARGET_SYSTEM))
 	$(AVRDUDE) $(avrdude_flags) -U flash:w:$(project_hex):i
 
+nm:
+	avr-nm --size-sort -r -C -S $(project_elf)
+
+dumpS:
+	avr-objdump -S -C $(project_elf) |less
+
 $(out_path):
+	mkdir $@
+
+$(vscode_path):
 	mkdir $@
 
 # Convert elf to hex
@@ -290,7 +312,7 @@ $(project_elf): $(objs_o)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $(objs_o)
 
 # Generate tasks.json
-$(tasks_json):
+$(tasks_json): $(out_path)
 	$(file > $@,{)
 	$(file >> $@,	// See https://go.microsoft.com/fwlink/?LinkId=733558)
 	$(file >> $@,	// for the documentation about the tasks.json format)
@@ -350,10 +372,9 @@ $(tasks_json):
 	$(file >> $@,		})
 	$(file >> $@,	])
 	$(file >> $@,})
-	@-diff -U 0 --color .vscode/tasks.json $(tasks_json)
 
 # Generate c_cpp_properties.json
-$(c_cpp_json):
+$(c_cpp_json): $(out_path)
 	$(file > $@,{)
 	$(file >> $@,  "configurations": [)
 	$(file >> $@,    {)
@@ -389,7 +410,6 @@ endif
 	$(file >> $@,  "version": 4)
 	$(file >> $@,})
 	perl -pi -e 's!^[\t ]+"\K/home/[^/"]+!~!' $@
-	@-diff -U 0 --color .vscode/c_cpp_properties.json $(c_cpp_json)
 
 ifeq (.ino,$(suffix $(PROJECT_NAME)))
 # Generate project .cpp from .ino
