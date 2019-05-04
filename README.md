@@ -135,18 +135,16 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
    Pin 10  | PB5      | PB3
 
    ```
-      ATtiny85 pins            ATtiny84 pins
-          _______                 _______
-    PB5 -|  \_/  |- VCC     VCC -|  \_/  |- GND
-    PB3 -|       |- PB2     PB0 -|       |- PA0
-    PB4 -|       |- PB1     PB1 -|       |- PA1
-    GND -|_______|- PB0     PB3 -|       |- PA2
-                            PB2 -|       |- PA3
-                            PA7 -|       |- PA4
-                            PA6 -|_______|- PA5
+               ATtiny85 pins                           ATtiny84 pins
+                  _______                                 _______
+    10 -->  PB5 -|  \_/  |- VCC                     VCC -|  \_/  |- GND
+            PB3 -|       |- PB2  <-- 13             PB0 -|       |- PA0
+            PB4 -|       |- PB1  <-- 12             PB1 -|       |- PA1
+            GND -|_______|- PB0  <-- 11      10 --> PB3 -|       |- PA2
+                                                    PB2 -|       |- PA3
+                                                    PA7 -|       |- PA4 <-- 13
+                                             11 --> PA6 -|_______|- PA5 <-- 12
    ```
-
-   (No, I did not mess up the pin locations :P Check the datasheets)
 
 ## Using `tasks.json` and `c_cpp_properties.json`
 * `tasks.json` is the configuration that adds `Build`, `Upload` and `Update .vscode/c_cpp_properties.json` as tasks in VSCode.
