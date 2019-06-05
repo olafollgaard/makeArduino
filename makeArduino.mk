@@ -310,7 +310,7 @@ $(project_elf): $(objs_o)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $(objs_o)
 
 # Generate tasks.json
-$(tasks_json): $(out_path)
+$(tasks_json): Makefile | $(out_path)
 	$(file > $@,{)
 	$(file >> $@,	// See https://go.microsoft.com/fwlink/?LinkId=733558)
 	$(file >> $@,	// for the documentation about the tasks.json format)
@@ -372,7 +372,7 @@ $(tasks_json): $(out_path)
 	$(file >> $@,})
 
 # Generate c_cpp_properties.json
-$(c_cpp_json): $(out_path)
+$(c_cpp_json): Makefile | $(out_path)
 	$(file > $@,{)
 	$(file >> $@,  "configurations": [)
 	$(file >> $@,    {)
