@@ -34,7 +34,6 @@ Other assumptions may be "hidden", or in plain english: It works on my setup :)
 The sample `Makefile` looks like this:
 
 ```cmake
-PROJECT_NAME = Sample
 # TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85
 TARGET_SYSTEM = uno
 INCLUDE_LIBS =
@@ -42,8 +41,6 @@ PROJECT_DEFINES =
 
 include ../makeArduino/makeArduino.mk
 ```
-
-* `PROJECT_NAME` is used as name part of `.elf` and `.hex` filenames, and so must be usable as such; don't use characters like `"`, `:` or `/`.
 
 * `TARGET_SYSTEM` specifies which hardware the project is aimed at:
 

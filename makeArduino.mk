@@ -2,10 +2,8 @@
 # Lightweight makefile for Arduino - olaf.ollgaard@gmail.com
 #
 # This makefile is made to be included from a simple Makefile with a few
-# configuration parameters, where only PROJECT_NAME and TARGET_SYSTEM are
-# required, e.g.:
+# configuration parameters, where only TARGET_SYSTEM is required, e.g.:
 # +--------------------------------------
-# |PROJECT_NAME = Sample
 # |TARGET_SYSTEM = uno
 # |INCLUDE_LIBS =
 # |include ../makeArduino/makeArduino.mk
@@ -23,10 +21,7 @@
 #--------------------------------------------------
 # Configuration variables and their default values
 
-# PROJECT_NAME : Project name, used as name part of .elf and .hex filenames
-ifndef PROJECT_NAME
-$(error !!!!! PROJECT_NAME must be defined)
-endif
+PROJECT_NAME = $(notdir $(abspath .))
 
 # TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85 | raw84 | raw85 | raw328p
 ifndef TARGET_SYSTEM
