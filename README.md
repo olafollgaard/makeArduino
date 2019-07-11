@@ -2,11 +2,11 @@
 An old-school makefile for Arduino/ATtiny84/85/ATmega328p projects.
 
 ## Introduction and History
-As a software developer in my daily life, I was immediately annoyed by the Arduino IDE when I started playing with Arduino in the beginning of 2017. This, in classic developer fashion, got me side-tracked, initially spending a lot more time on toolchain setup than on the actual Arduino project... Oh well, imho it was time well spent in the name of flexibility and ease-of-use :)
+As a software developer in my daily life, I was immediately annoyed by the Arduino IDE when I started playing with Arduino in the beginning of 2017. This, in classic developer fashion, got me side-tracked, initially spending a lot more time on toolchain setup than on the actual Arduino project... Oh well, imho it was time well spent ~~in the name of flexibility~~ having nerd-fun :-)
 
-I decided on **Visual Studio Code** with an **old-school makefile** for building and uploading to the MCU. At work I am a Windows developer, but at home I use **Ubuntu**, and I have no plans of using this makefile on Windows, though it probably wouldn't be hard to do.
+I decided on **Visual Studio Code** with an old-school makefile for building and uploading to the MCU. At work I am a Windows developer, but at home I use Ubuntu, and I have no plans of using this makefile on Windows, though it probably wouldn't be hard to do.
 
-As the makefile got more complex, it led to make it re-usable via `include`, so that each individual project only needed a minimal makefile. Consequently, it must be **project-agnostic**. Most configuration variables can be initialized with project-specific content before the `include` statement.
+As the makefile got more complex, it led to make it re-usable via `include`, so that each individual project only needed a minimal makefile. Consequently, it must be project-agnostic. Most configuration variables can be initialized with project-specific content before the `include` statement.
 
 This makefile is the result, and I have used it for a couple of Arduino projects, some on **Adafruit Pro Trinket 5V** boards, others on **ATtiny85/84** chips.
 
@@ -15,7 +15,9 @@ This project is licensed under the terms of the MIT license.
 ## Assumptions
 The ease-of-use is based on some assumptions, some of which can be reconfigured by assigning the appropriate varables beore including `makeArduino.mk`.
 
-For Atmel ATtiny8x chips, `ARDUINO_CORE_PATH` points to the [arduino-tiny](https://code.google.com/archive/p/arduino-tiny/) package, located in `~/Arduino/libraries/tiny`.
+For `tiny_84` | `tiny_85` targets, `ARDUINO_CORE_PATH` points to the [arduino-tiny](https://code.google.com/archive/p/arduino-tiny/) package, located in `~/Arduino/tiny`.
+
+For `raw84` | `raw85` | `raw328p` targets, `ARDUINO_CORE_PATH` points to the [rawcore](https://github.com/olafollgaard/rawcore/) package, located in `~/Arduino/rawcore`.
 
 Config variable      | Default            | Usage
 -------------------- | ------------------ | ----------------------
@@ -37,7 +39,7 @@ Other assumptions may be "hidden", or in plain english: It works on my setup :)
 The sample `Makefile` looks like this:
 
 ```cmake
-# TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85
+# TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85 | raw84 | raw85 | raw328p
 TARGET_SYSTEM = uno
 INCLUDE_LIBS =
 PROJECT_DEFINES =
@@ -48,11 +50,14 @@ include ../makeArduino/makeArduino.mk
 * `TARGET_SYSTEM` specifies which hardware the project is aimed at:
 
   Value            | Hardware
-  ---------------- | ------------------------------
+  ---------------- | ---------------------------------
   `uno`            | Plain old Arduino Uno R3 board
   `pro_trinket_5v` | Adafruit Pro Trinket 5V board
-  `tiny_84`        | Atmel ATtiny84 microcontroller
-  `tiny_85`        | Atmel ATtiny85 microcontroller
+  `tiny_84`        | Atmel ATtiny84, using `tiny` core
+  `tiny_85`        | Atmel ATtiny85, using `tiny` core
+  `raw84`          | Atmel ATtiny84, using `rawcore`
+  `raw85`          | Atmel ATtiny85, using `rawcore`
+  `raw328p`        | Atmel ATmega328p, using `rawcore`
 
 * `INCLUDE_LIBS` is the most advanced variable in terms of implementing `makeArduino.mk`, but it is very easy to use, provided that your library folders are located in one of the folders in `LIBRARY_PATHS`, and also, of course, that my "hidden assumptions" are correct :)
 
@@ -94,7 +99,7 @@ Target              | Purpose
 `compile`           | Compile only changed files
 `nm`                | List what uses the sometimes precious space
 `dumpS`             | Dump dissasembly
-`burnfuses`         | "Burn" fuses in ATtiny8x mcu, via Arduino ISP
+`burnfuses`         | "Burn" fuses in ATtiny/ATmega mcu, via Arduino ISP
 `upload`            | Compile changed files, then upload to board
 
 When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not the `.h` files they depend on. Maybe I'll implement that later, but for now just `build`, it's not as if there is tons of flash for so much code that `build` is unreasonably slower than `compile` :)
@@ -112,7 +117,7 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
 2. Press reset button on the trinket (I have not figured out how to auto-reset)
 3. `make upload`
 
-### `TARGET_SYSTEM` = `tiny_84` or `tiny_85`
+### `TARGET_SYSTEM` = `tiny_84` | `tiny_85` | `raw84` | `raw85`
 1. Set up Arduino as ISP, as detailed below
 2. Plug Arduino ISP into the USB port, which should show up as `/dev/ttyACM0`
 3. `make burnfuses` - this only needs to be done once for each chip
