@@ -1,4 +1,7 @@
 # makeArduino
+An old-school makefile for Arduino/ATtiny84/85/ATmega328p projects.
+
+## Introduction and History
 As a software developer in my daily life, I was immediately annoyed by the Arduino IDE when I started playing with Arduino in the beginning of 2017. This, in classic developer fashion, got me side-tracked, initially spending a lot more time on toolchain setup than on the actual Arduino project... Oh well, imho it was time well spent in the name of flexibility and ease-of-use :)
 
 I decided on **Visual Studio Code** with an **old-school makefile** for building and uploading to the MCU. At work I am a Windows developer, but at home I use **Ubuntu**, and I have no plans of using this makefile on Windows, though it probably wouldn't be hard to do.
@@ -150,9 +153,12 @@ When the above says "changed", only `.c`, `.cpp` or `.S` files are checked, not 
 Whenever the `compile` target is run, fresh `tasks.json` and `c_cpp_properties.json` file are generated in `.mkout`. If they is different from the ones in `.vscode`, a short `diff` is shown after `compile` is done. Make will say that an error occurred and was ignored, because `diff` returns nonzero when differences were found.
 
 To rebuild or update `tasks.json` and `c_cpp_properties.json` without compiling the project, e.g. in a fresh new one, run one of the following:
-* `make buildvscode` - Generate both files
-* `make updatevscode` - Generate and replace both files
-* `make buildvscodetasks` - Generate `tasks.json`
-* `make updatevscodetasks` - Generate and replace `tasks.json`
-* `make buildvscodecpp` - Generate `c_cpp_properties.json`
-* `make updatevscodecpp` - Generate and replace `c_cpp_properties.json`
+
+Command | Action
+--------|-------
+`make buildvscode` | Generate both files
+`make updatevscode` | Generate and replace both files
+`make buildvscodetasks` | Generate `tasks.json`
+`make updatevscodetasks` | Generate and replace `tasks.json`
+`make buildvscodecpp` | Generate `c_cpp_properties.json`
+`make updatevscodecpp` | Generate and replace `c_cpp_properties.json`
