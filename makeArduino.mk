@@ -279,6 +279,7 @@ burnfuses:
 endif
 
 upload: compile
+	$(info #)
 	$(info # Upload to $(TARGET_SYSTEM))
 	$(AVRDUDE) $(avrdude_flags) -U flash:w:$(project_hex):i
 
@@ -296,11 +297,13 @@ $(vscode_path):
 
 # Convert elf to hex
 $(project_hex): $(project_elf)
+	$(info #)
 	$(info # Convert to $@)
 	$(AVR_OBJCOPY) -O ihex -R .eeprom $< $@
 
 # Link to elf
 $(project_elf): $(objs_o)
+	$(info #)
 	$(info # Link to $@)
 	$(CC) -mmcu=$(mcu) -lm -Wl,--gc-sections -Os -o $@ $(objs_o)
 
@@ -413,12 +416,15 @@ $$(out_path)/$(1):
 	mkdir $$@
 endif
 $$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/)%.c.o:: $(2)/%.c
+	$$(info #)
 	$$(info # Compile $$<)
 	$$(CC) -c $$(CFLAGS) $$< -o $$@
 $$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/)%.cpp.o:: $(2)/%.cpp
+	$$(info #)
 	$$(info # Compile $$<)
 	$$(CXX) -c $$(CXXFLAGS) $$< -o $$@
 $$(out_path)/$$(if $$(filter-out .,$(1)),$(1)/)%.S.o:: $(2)/%.S
+	$$(info #)
 	$$(info # Compile $$<)
 	$$(CC) -c $$(SFLAGS) $$(CFLAGS) $$< -o $$@
 endef
