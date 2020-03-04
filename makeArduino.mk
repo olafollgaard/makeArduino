@@ -251,13 +251,13 @@ buildvscode: buildvscodecpp buildvscodetasks
 
 updatevscode: updatevscodecpp updatevscodetasks
 
-buildvscodecpp: $(c_cpp_json)
+buildvscodecpp: $(c_cpp_json) $(vscode_path)
 	@-diff -U 0 --color $(c_cpp_json_vscode) $(c_cpp_json)
 
 updatevscodecpp: buildvscodecpp
 	cp $(c_cpp_json) $(c_cpp_json_vscode)
 
-buildvscodetasks: $(tasks_json)
+buildvscodetasks: $(tasks_json) $(vscode_path)
 	@-diff -U 0 --color $(tasks_json_vscode) $(tasks_json)
 
 updatevscodetasks: buildvscodetasks
