@@ -16,17 +16,17 @@
 # Core libraries used:
 # uno, pro_trinket_5v: Core from Arudino IDE 1.8.1
 # tiny_84, tiny_85: https://code.google.com/archive/p/arduino-tiny/
-# raw84, raw85, raw328p: rawcore
+# raw84, raw85, raw328p, raw32u4, itsybitsy_32u4: rawcore
 
 #--------------------------------------------------
 # Configuration variables and their default values
 
 PROJECT_NAME = $(notdir $(abspath .))
 
-# TARGET_SYSTEM : uno | pro_trinket_5v | tiny_84 | tiny_85 | raw84 | raw85 | raw328p
+# TARGET_SYSTEM : uno | pro_trinket_5v | itsybitsy_32u4 | tiny_84 | tiny_85 | raw84 | raw85 | raw328p | raw32u4
 ifndef TARGET_SYSTEM
 $(error !!!!! TARGET_SYSTEM must be defined)
-else ifeq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v tiny_84 tiny_85 raw84 raw85 raw328p))
+else ifeq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v itsybitsy_32u4 tiny_84 tiny_85 raw84 raw85 raw328p raw32u4))
 $(error !!!!! Unrecognized TARGET_SYSTEM $(TARGET_SYSTEM))
 endif
 
@@ -56,7 +56,7 @@ PROJECTS_ROOT_PATH ?= /home/$(USER)/Arduino
 # ARDUINO_CORE_PATH: Path to arduino core
 ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/tiny/avr/cores/tiny
-else ifneq (,$(filter $(TARGET_SYSTEM),raw84 raw85 raw328p))
+else ifneq (,$(filter $(TARGET_SYSTEM),raw84 raw85 raw328p raw32u4 itsybitsy_32u4))
 ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/rawcore
 else
 ARDUINO_CORE_PATH ?= $(ARDUINO_AVR_PATH)/cores/arduino
@@ -70,7 +70,7 @@ endif
 LIBRARY_PATHS += $(ARDUINO_AVR_PATH)/libraries $(ARDUINO_IDE_PATH)/libraries
 
 # F_CPU : Target frequency in Hz
-ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v))
+ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v itsybitsy_32u4))
 F_CPU ?= 16000000
 else
 F_CPU ?= 8000000
@@ -83,7 +83,7 @@ UPLOAD_PORT ?= /dev/ttyACM0
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 UPLOAD_PROGRAMMER = usbtiny
 UPLOAD_PORT_CONFIG =
-else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85 raw84 raw85 raw328p))
+else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85 raw84 raw85 raw328p raw32u4 itsybitsy_32u4))
 UPLOAD_PROGRAMMER ?= stk500v1
 UPLOAD_PORT_CONFIG ?= -b 19200 -P $(UPLOAD_PORT)
 else
@@ -149,6 +149,8 @@ endef
 
 ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v raw328p))
 mcu = atmega328p
+else ifneq (,$(filter $(TARGET_SYSTEM),raw32u4 itsybitsy_32u4))
+mcu = atmega32u4
 else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 raw84))
 mcu = attiny84
 else ifneq (,$(filter $(TARGET_SYSTEM),tiny_85 raw85))
@@ -386,10 +388,12 @@ else ifneq (,$(filter $(mcu),attiny85))
 endif
 else ifneq (,$(filter $(mcu),atmega328p))
 	$(file >> $@,        "__AVR_MEGA__", "__AVR_ATmega328P__",)
+else ifneq (,$(filter $(mcu),atmega32u4))
+	$(file >> $@,        "__AVR_MEGA__", "__AVR_ATmega32U4__",)
 endif
 ifneq (,$(filter $(mcu),attiny84 attiny85))
 	$(file >> $@,        "__AVR_ARCH__=25")
-else ifneq (,$(filter $(mcu),atmega328p))
+else ifneq (,$(filter $(mcu),atmega328p atmega32u4))
 	$(file >> $@,        "__AVR_ARCH__=5")
 else
 	$(file >> $@,        "__AVR_ARCH__")
