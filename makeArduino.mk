@@ -16,17 +16,21 @@
 # Core libraries used:
 # uno, pro_trinket_5v: Core from Arudino IDE 1.8.1
 # tiny_84, tiny_85: https://code.google.com/archive/p/arduino-tiny/
-# raw84, raw85, raw328p, raw32u4, itsybitsy_32u4: rawcore
+# (default): rawcore
 
 #--------------------------------------------------
 # Configuration variables and their default values
 
 PROJECT_NAME = $(notdir $(abspath .))
 
-# TARGET_SYSTEM : uno | pro_trinket_5v | itsybitsy_32u4 | tiny_84 | tiny_85 | raw84 | raw85 | raw328p | raw32u4
 ifndef TARGET_SYSTEM
 $(error !!!!! TARGET_SYSTEM must be defined)
-else ifeq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v itsybitsy_32u4 tiny_84 tiny_85 raw84 raw85 raw328p raw32u4))
+else ifeq (,$(filter $(TARGET_SYSTEM), \
+	uno \
+	pro_trinket_5v \
+	itsybitsy_32u4 \
+	tiny_84 tiny_85 \
+	raw84 raw85 raw328p raw32u4))
 $(error !!!!! Unrecognized TARGET_SYSTEM $(TARGET_SYSTEM))
 endif
 
@@ -56,10 +60,10 @@ PROJECTS_ROOT_PATH ?= /home/$(USER)/Arduino
 # ARDUINO_CORE_PATH: Path to arduino core
 ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85))
 ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/tiny/avr/cores/tiny
-else ifneq (,$(filter $(TARGET_SYSTEM),raw84 raw85 raw328p raw32u4 itsybitsy_32u4))
-ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/rawcore
-else
+else ifneq (,$(filter $(TARGET_SYSTEM),uno, pro_trinket_5v))
 ARDUINO_CORE_PATH ?= $(ARDUINO_AVR_PATH)/cores/arduino
+else
+ARDUINO_CORE_PATH ?= $(PROJECTS_ROOT_PATH)/rawcore
 endif
 # LIBRARY_PATHS : List of library root paths, in order of preference in case
 #	of any libraries present in more than one place
@@ -70,7 +74,10 @@ endif
 LIBRARY_PATHS += $(ARDUINO_AVR_PATH)/libraries $(ARDUINO_IDE_PATH)/libraries
 
 # F_CPU : Target frequency in Hz
-ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v itsybitsy_32u4))
+ifneq (,$(filter $(TARGET_SYSTEM),\
+	uno \
+	pro_trinket_5v \
+	itsybitsy_32u4))
 F_CPU ?= 16000000
 else
 F_CPU ?= 8000000
@@ -83,12 +90,12 @@ UPLOAD_PORT ?= /dev/ttyACM0
 ifeq ($(TARGET_SYSTEM),pro_trinket_5v)
 UPLOAD_PROGRAMMER = usbtiny
 UPLOAD_PORT_CONFIG =
-else ifneq (,$(filter $(TARGET_SYSTEM),tiny_84 tiny_85 raw84 raw85 raw328p raw32u4 itsybitsy_32u4))
-UPLOAD_PROGRAMMER ?= stk500v1
-UPLOAD_PORT_CONFIG ?= -b 19200 -P $(UPLOAD_PORT)
-else
+else ifeq ($(TARGET_SYSTEM),uno)
 UPLOAD_PROGRAMMER ?= arduino
 UPLOAD_PORT_CONFIG ?= -b 115200 -P $(UPLOAD_PORT)
+else
+UPLOAD_PROGRAMMER ?= stk500v1
+UPLOAD_PORT_CONFIG ?= -b 19200 -P $(UPLOAD_PORT)
 endif
 
 # FUSES_CONFIG : Fuses to "burn"
