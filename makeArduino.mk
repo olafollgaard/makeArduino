@@ -28,6 +28,7 @@ $(error !!!!! TARGET_SYSTEM must be defined)
 else ifeq (,$(filter $(TARGET_SYSTEM), \
 	uno \
 	pro_trinket_5v \
+	pro_micro_5v \
 	itsybitsy_32u4 \
 	tiny_84 tiny_85 \
 	raw84 raw85 raw328p raw32u4))
@@ -77,6 +78,7 @@ LIBRARY_PATHS += $(ARDUINO_AVR_PATH)/libraries $(ARDUINO_IDE_PATH)/libraries
 ifneq (,$(filter $(TARGET_SYSTEM),\
 	uno \
 	pro_trinket_5v \
+	pro_micro_5v \
 	itsybitsy_32u4))
 F_CPU ?= 16000000
 else
@@ -154,7 +156,7 @@ endef
 #---------------------------------------------
 # Translate configuration into compiler flags
 
-ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v raw328p))
+ifneq (,$(filter $(TARGET_SYSTEM),uno pro_trinket_5v pro_micro_5v raw328p))
 mcu = atmega328p
 else ifneq (,$(filter $(TARGET_SYSTEM),raw32u4 itsybitsy_32u4))
 mcu = atmega32u4
