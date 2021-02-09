@@ -421,7 +421,7 @@ endif
 	$(file >> $@,          "$${workspaceRoot}")
 	$(file >> $@,        ])
 	$(file >> $@,      },)
-	$(file >> $@,      "intelliSenseMode": "clang-x64")
+	$(file >> $@,      "intelliSenseMode": "linux-gcc-x64")
 	$(file >> $@,    })
 	$(file >> $@,  ],)
 	$(file >> $@,  "version": 4)
